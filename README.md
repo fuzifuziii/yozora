@@ -31,19 +31,6 @@ Run the installer:
 ./install.sh
 ```
 
-## Repository Structure
-
-```text
-.
-├── config/            # Desktop configuration files (.config)
-├── share/             # Shared application data (.local/share)
-├── screenshots/       # Images used in README
-├── install.sh         # Interactive installation script
-├── LICENSE            # Project license
-├── README.md          # This documentation file
-└── TokyoNight.colors  # Qt style
-
-```
 ## Basic binds
 
 | Bind            | Module    |

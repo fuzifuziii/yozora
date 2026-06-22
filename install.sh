@@ -268,7 +268,7 @@ show_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install other packages"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V1.8===================${NC}"
+  echo -e "${BLUE}=================V1.9===================${NC}"
 }
 
 while true; do
