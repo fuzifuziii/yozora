@@ -1,0 +1,6 @@
+#!/bin/bash
+
+APP_ID="org.fuzi.$(basename $1)"
+LAUNCH_COMMAND="fuzi-launch-tui $@"
+
+exec fuzi-launch-or-focus "$APP_ID" "$LAUNCH_COMMAND"

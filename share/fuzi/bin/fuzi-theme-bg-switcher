@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Определяем путь к fuzi (если переменная пустая, используем путь по умолчанию)
+FUZI_PATH=${FUZI_PATH:-$HOME/.local/share/fuzi}
+
+# Получаем реальный путь к текущим обоям (разворачиваем симлинк, если он есть)
+current_background=$(readlink -f "$HOME/.local/share/fuzi/background" 2>/dev/null)
+
+# Запускаем меню выбора картинок.
+# В качестве источника картинок указываем вашу директорию fuzi
+fuzi-menu-images \
+  --selected "$current_background" \
+  "$FUZI_PATH"

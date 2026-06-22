@@ -1,0 +1,80 @@
+#!/bin/bash
+
+FUZI_PATH="$HOME/.local/share/fuzi/wallpaper"
+FLAG_FILE="$HOME/.local/share/fuzi/toggles/save_screenshot"
+
+toggle_existing_menu() {
+  if pgrep -f "walker.*--dmenu" >/dev/null; then
+    walker --close >/dev/null 2>&1
+    exit 0
+  fi
+}
+
+menu() {
+  local prompt="$1"
+  local options="$2"
+  local extra="$3"
+  local preselect="$4"
+
+  read -r -a args <<<"$extra"
+
+  if [[ -n $preselect ]]; then
+    local index
+    index=$(echo -e "$options" | grep -nxF "$preselect" | cut -d: -f1)
+    if [[ -n $index ]]; then
+      args+=("-c" "$index")
+    fi
+  fi
+
+  echo -e "$options" | fuzi-launch-walker --dmenu --width 295 --minheight 1 --maxheight 630 -p "$prompt" "${args[@]}" 2>/dev/null
+}
+
+show_background_menu() {
+  if [[ ! -d "$FUZI_PATH" ]]; then
+    notify-send -u critical "Ошибка Обоев" "Папка не найдена: $FUZI_PATH"
+    return 1
+  fi
+
+  local wp_options
+  wp_options=$(find -L "$FUZI_PATH" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) -printf "%f\n" | sort)
+
+  if [[ -z "$wp_options" ]]; then
+    notify-send -u critical "Ошибка Обоев" "В папке $FUZI_PATH нет картинок (.jpg, .png, .webp)"
+    return 1
+  fi
+
+  local current_bg_path
+  local current_bg_name=""
+  current_bg_path=$(readlink -f "$HOME/.local/share/fuzi/background" 2>/dev/null)
+  if [[ -n "$current_bg_path" ]]; then
+    current_bg_name="${current_bg_path##*/}"
+  fi
+
+  local selected_file
+  selected_file=$(menu "Wallpapers" "$wp_options" "" "$current_bg_name")
+
+  if [[ -n "$selected_file" ]]; then
+    fuzi-theme-bg-set "$FUZI_PATH/$selected_file"
+  fi
+}
+
+show_main_menu() {
+
+  local options="󰂛  Notifications\n  Screenshot Save\n  Wallpaper"
+
+  case $(menu "Search..." "$options") in
+  *Notifications*)
+    fuzi-toggle-notification-silencing
+    ;;
+  *Wallpaper*)
+    show_background_menu
+    ;;
+  *Screenshot*)
+    fuzi-toggle-screenshot
+    ;;
+  esac
+}
+
+toggle_existing_menu
+
+show_main_menu

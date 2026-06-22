@@ -1,0 +1,147 @@
+{
+  "logo": {
+    "color": {
+      "1": "green"
+    },
+    "height": 15,
+    "padding": {
+      "left": 2,
+      "right": 6,
+      "top": 2
+    },
+    "source": "/home/fuzifuziii/Pictures/.g/g.jpg",
+    "type": "kitty",
+    "width": 35
+  },
+  "modules": [
+    "break",
+    {
+      "format": "{#green}┌──────────────────────Hardware──────────────────────┐",
+      "type": "custom"
+    },
+    {
+      "key": " PC",
+      "keyColor": "green",
+      "type": "host"
+    },
+    {
+      "key": "│ ├",
+      "keyColor": "green",
+      "showPeCoreCount": true,
+      "type": "cpu"
+    },
+    {
+      "detectionMethod": "pci",
+      "key": "│ ├",
+      "keyColor": "green",
+      "type": "gpu"
+    },
+    {
+      "key": "│ ├󱄄",
+      "keyColor": "green",
+      "type": "display"
+    },
+    {
+      "key": "│ ├󰋊",
+      "keyColor": "green",
+      "type": "disk"
+    },
+    {
+      "key": "│ ├",
+      "keyColor": "green",
+      "type": "memory"
+    },
+    {
+      "key": "└ └󰓡",
+      "keyColor": "green",
+      "type": "swap"
+    },
+    {
+      "format": "{#green}└────────────────────────────────────────────────────┘",
+      "type": "custom"
+    },
+    "break",
+    {
+      "format": "{#blue}┌──────────────────────Software──────────────────────┐",
+      "type": "custom"
+    },
+    {
+      "key": " OS",
+      "keyColor": "blue",
+      "type": "os"
+    },
+    {
+      "key": "│ ├󰔫",
+      "keyColor": "blue",
+      "text": "echo \"Yozora 1.9\"",
+      "type": "command"
+    },
+    {
+      "key": "│ ├♥",
+      "keyColor": "blue",
+      "text": "echo \"by fuzifuziii\"",
+      "type": "command"
+    },
+    {
+      "key": "│ ├𐐃",
+      "keyColor": "blue",
+      "type": "kernel"
+    },
+    {
+      "key": "│ ├",
+      "keyColor": "blue",
+      "type": "wm"
+    },
+    {
+      "key": " DE",
+      "keyColor": "blue",
+      "type": "de"
+    },
+    {
+      "key": "│ ├",
+      "keyColor": "blue",
+      "type": "terminal"
+    },
+    {
+      "key": "│ ├󰏖",
+      "keyColor": "blue",
+      "type": "packages"
+    },
+    {
+      "key": "│ ├󰉼",
+      "keyColor": "blue",
+      "type": "wmtheme"
+    },
+    {
+      "key": "└ └",
+      "keyColor": "blue",
+      "type": "terminalfont"
+    },
+    {
+      "format": "{#blue}└────────────────────────────────────────────────────┘",
+      "type": "custom"
+    },
+    "break",
+    {
+      "format": "{#magenta}┌────────────────────Age & Uptime────────────────────┐",
+      "type": "custom"
+    },
+    {
+      "key": "󱦟 OS Age",
+      "keyColor": "magenta",
+      "text": "echo $(( ($(date +%s) - $(stat -c %W /)) / 86400 )) days",
+      "type": "command"
+    },
+    {
+      "key": "󱫐 Uptime",
+      "keyColor": "magenta",
+      "type": "uptime"
+    },
+    {
+      "format": "{#magenta}└────────────────────────────────────────────────────┘",
+      "type": "custom"
+    },
+    "break"
+  ]
+}
+

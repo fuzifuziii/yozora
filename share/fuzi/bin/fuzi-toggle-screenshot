@@ -1,0 +1,6 @@
+#!/bin/bash
+
+fuzi-toggle \
+  --enabled-notification "Screenshots will now be saved and copied" \
+  --disabled-notification "Screenshots will only be copied to clipboard" \
+  "save_screenshot"
