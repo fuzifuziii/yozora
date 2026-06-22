@@ -6,7 +6,16 @@
 
 set -e
 
-load_packages() {
+PKGS_DIR="./pkgs"
+
+# Terminal colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+l_packages() {
   local file="$1"
   if [ -f "$file" ]; then
     mapfile -t "$2" < <(grep -v -E '^(\s*#|\s*$)' "$file")
@@ -16,20 +25,13 @@ load_packages() {
   fi
 }
 
-load_packages "$PKGS_DIR/pacman.txt" PACMAN_PKGS
-load_packages "$PKGS_DIR/fonts.txt" FONTS_PKGS
-load_packages "$PKGS_DIR/aur.txt" AUR_PKGS
-load_packages "$PKGS_DIR/nvidia.txt" NVIDIA_PKGS
-load_packages "$PKGS_DIR/pipewire.txt" PIPEWIRE_PKGS
-load_packages "$PKGS_DIR/cups.txt" CUPS_PKGS
-load_packages "$PKGS_DIR/other.txt" OTHER_PKGS
-
-# Terminal colors
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+l_packages "$PKGS_DIR/pacman.txt" PACMAN_PKGS
+l_packages "$PKGS_DIR/fonts.txt" FONTS_PKGS
+l_packages "$PKGS_DIR/aur.txt" AUR_PKGS
+l_packages "$PKGS_DIR/nvidia.txt" NVIDIA_PKGS
+l_packages "$PKGS_DIR/pipewire.txt" PIPEWIRE_PKGS
+l_packages "$PKGS_DIR/cups.txt" CUPS_PKGS
+l_packages "$PKGS_DIR/other.txt" OTHER_PKGS
 
 ##############
 # Validation #
@@ -51,14 +53,21 @@ fi
 # Helper functions #
 ####################
 
-enable_multilib() {
+e_multilib() {
   if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
     echo -e "${BLUE}Enabling multilib repository...${NC}"
     sudo sed -i '/^#\[multilib\]/,/^#Include/s/^#//' /etc/pacman.conf
   fi
 }
 
-init_sudo() {
+e_candy() {
+  if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
+    echo -e "${BLUE}Enabling ILoveCandy progress bar...${NC}"
+    sudo sed -i '/^# Misc options/a ILoveCandy' /etc/pacman.conf
+  fi
+}
+
+i_sudo() {
   echo -e "${BLUE}Requesting administrator privileges...${NC}"
   sudo true
 }
@@ -67,7 +76,31 @@ init_sudo() {
 # Core install #
 ################
 
-install_core() {
+i_yay() {
+  if ! command -v yay >/dev/null 2>&1; then
+    echo -e "${BLUE}yay not found. Installing...${NC}"
+
+    rm -rf /tmp/yay-build
+    mkdir -p /tmp/yay-build
+
+    git clone https://aur.archlinux.org/yay.git /tmp/yay-build/yay
+
+    pushd /tmp/yay-build/yay >/dev/null
+    makepkg -si --noconfirm
+    popd >/dev/null
+
+    rm -rf /tmp/yay-build
+
+    if ! command -v yay >/dev/null 2>&1; then
+      echo "Error: Failed to install yay."
+      exit 1
+    fi
+
+    echo -e "${GREEN}✓ yay installed successfully!${NC}"
+  fi
+}
+
+i_yozora() {
   echo -e "${BLUE}=== Starting Yozora installation ===${NC}"
 
   # Create directories
@@ -120,8 +153,9 @@ install_core() {
   # Install packages
   echo -e "\n${BLUE}[3/3] Installing packages...${NC}"
 
-  enable_multilib
-  init_sudo
+  e_multilib
+  e_candy
+  i_sudo
 
   echo -e "${BLUE}Updating system...${NC}"
   sudo pacman -Syu --noconfirm
@@ -133,28 +167,7 @@ install_core() {
   fi
 
   if [ ${#AUR_PKGS[@]} -gt 0 ]; then
-    if ! command -v yay >/dev/null 2>&1; then
-      echo -e "${BLUE}yay not found. Installing...${NC}"
-
-      rm -rf /tmp/yay-build
-      mkdir -p /tmp/yay-build
-
-      git clone https://aur.archlinux.org/yay.git /tmp/yay-build/yay
-
-      pushd /tmp/yay-build/yay >/dev/null
-      makepkg -si --noconfirm
-      popd >/dev/null
-
-      rm -rf /tmp/yay-build
-
-      if ! command -v yay >/dev/null 2>&1; then
-        echo "Error: Failed to install yay."
-        exit 1
-      fi
-
-      echo -e "${GREEN}✓ yay installed successfully!${NC}"
-    fi
-
+    i_yay
     echo -e "${BLUE}Installing AUR packages via yay...${NC}"
     yay -S --needed --noconfirm "${AUR_PKGS[@]}"
   fi
@@ -185,7 +198,7 @@ install_core() {
   if command -v plasma-apply-colorscheme &>/dev/null; then
     plasma-apply-colorscheme TokyoNight || true
   else
-    # Fallback for headless environments/Plasma 6 configs
+    # Fallback for plasma 6 configs
     kwriteconfig6 --file kdeglobals --group General --key ColorScheme "Tokyo Night" || true
   fi
 
@@ -201,6 +214,45 @@ install_core() {
 
   echo -e "\n${GREEN}=== Core installation completed successfully! ===${NC}"
   echo -e "${BLUE}Please reboot your system when ready.${NC}\n"
+}
+
+i_nvidia() {
+  echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
+  e_multilib
+  i_sudo
+  sudo pacman -Syu --needed --noconfirm "${NVIDIA_PKGS[@]}"
+  echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
+}
+
+i_pipewire() {
+  echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
+  e_multilib
+  i_sudo
+  sudo pacman -Syu --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
+  echo -e "${BLUE}Enabling and starting Pipewire user services...${NC}"
+  systemctl --user enable --now pipewire pipewire-pulse wireplumber
+  echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
+}
+
+i_cups() {
+  echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
+  i_sudo
+  sudo pacman -Syu --needed --noconfirm "${CUPS_PKGS[@]}"
+  echo -e "${BLUE}Enabling and starting CUPS services...${NC}"
+  sudo systemctl enable --now cups
+  echo -e "${GREEN}✓ CUPS drivers installed successfully!${NC}"
+}
+
+i_other() {
+  echo -e "\n${BLUE}Preparing to install xone drivers...${NC}"
+  i_yay
+  yay -S --needed --noconfirm "${OTHER_PKGS[@]}"
+  echo -e "${GREEN}✓ Xone drivers installed successfully!${NC}"
+}
+
+e_script() {
+  echo -e "\n${GREEN}Exiting. Bye!${NC}"
+  exit 0
 }
 
 ####################
@@ -224,45 +276,12 @@ while true; do
   show_menu
   read -r -p "Enter your choice [1-6]: " choice
   case $choice in
-  1)
-    install_core
-    ;;
-  2)
-    echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
-    enable_multilib
-    init_sudo
-    sudo pacman -Sy --needed --noconfirm "${NVIDIA_PKGS[@]}"
-    echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
-    ;;
-  3)
-    echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
-    enable_multilib
-    init_sudo
-    sudo pacman -Sy --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
-    echo -e "${BLUE}Enabling and starting Pipewire user services...${NC}"
-    systemctl --user enable --now pipewire pipewire-pulse wireplumber
-    echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
-    ;;
-  4)
-    echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
-    init_sudo
-    sudo pacman -Sy --needed --noconfirm "${CUPS_PKGS[@]}"
-    echo -e "${BLUE}Enabling and starting CUPS services...${NC}"
-    init_sudo
-    sudo systemctl enable --now cups
-    echo -e "${GREEN}✓ CUPS drivers installed successfully!${NC}"
-    ;;
-  5)
-    echo -e "\n${BLUE}Preparing to install xone drivers...${NC}"
-    yay -S --needed --noconfirm "${OTHER_PKGS[@]}"
-    echo -e "${GREEN}✓ Xone drivers installed successfully!${NC}"
-    ;;
-  6)
-    echo -e "\n${GREEN}Exiting. Bye!${NC}"
-    exit 0
-    ;;
-  *)
-    echo -e "\n${YELLOW}Invalid option. Please choose between 1 and 6.${NC}"
-    ;;
+  1) i_yozora ;;
+  2) i_nvidia ;;
+  3) i_pipewire ;;
+  4) i_cups ;;
+  5) i_other ;;
+  6) e_script ;;
+  *) echo -e "\n${YELLOW}Invalid option. Please choose between 1 and 6.${NC}" ;;
   esac
 done
