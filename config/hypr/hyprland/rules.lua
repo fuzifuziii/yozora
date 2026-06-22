@@ -189,7 +189,7 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "(org.fuzi.bluetui|org.fuzi.impala|org.fuzi.wiremix|org.fuzi.btop|org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv|org.kde.gwenview|org.fuzi.playit)",
+		class = "(org.fuzi.nmtui|org.fuzi.bluetui|org.fuzi.impala|org.fuzi.wiremix|org.fuzi.btop|org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv|org.kde.gwenview|org.fuzi.playit)",
 	},
 	tag = "+floating-window",
 })
@@ -261,8 +261,8 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "^(steam)$",
-		title = "(Friends List|Notification|Steam - Notification)",
+		class = "^steamwebhelper$",
+		title = ".*Notification.*",
 	},
 	float = true,
 	pin = true,

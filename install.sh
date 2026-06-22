@@ -72,10 +72,6 @@ i_sudo() {
   sudo true
 }
 
-################
-# Core install #
-################
-
 i_yay() {
   if ! command -v yay >/dev/null 2>&1; then
     echo -e "${BLUE}yay not found. Installing...${NC}"
@@ -99,6 +95,10 @@ i_yay() {
     echo -e "${GREEN}✓ yay installed successfully!${NC}"
   fi
 }
+
+#######################
+# Necessary functions #
+#######################
 
 i_yozora() {
   echo -e "${BLUE}=== Starting Yozora installation ===${NC}"
@@ -212,7 +212,7 @@ i_yozora() {
   # Enable elephant service
   elephant service enable
 
-  echo -e "\n${GREEN}=== Core installation completed successfully! ===${NC}"
+  echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
   echo -e "${BLUE}Please reboot your system when ready.${NC}\n"
 }
 
@@ -269,7 +269,7 @@ show_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install other packages"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V1.8===================${NC}"
+  echo -e "${BLUE}=================V2.0===================${NC}"
 }
 
 while true; do
