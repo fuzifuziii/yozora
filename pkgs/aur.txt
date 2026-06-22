@@ -1,0 +1,6 @@
+walker
+elephant-all
+hyprland-preview-share-picker-git
+wayfreeze-git
+tokyonight-gtk-theme-git
+xdg-terminal-exec

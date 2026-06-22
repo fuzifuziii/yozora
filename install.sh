@@ -6,74 +6,23 @@
 
 set -e
 
-PACMAN_PKGS=(
-  "sddm"
-  "base-devel"
-  "dolphin"
-  "fastfetch"
-  "btop"
-  "fish"
-  "hyprland"
-  "hyprpicker"
-  "xdg-desktop-portal-hyprland"
-  "kitty"
-  "mako"
-  "swayosd"
-  "plasma-workspace"
-  "uwsm"
-  "waybar"
-  "slurp"
-  "grim"
-  "polkit-kde-agent"
-  "systemsettings"
-  "swaybg"
-  "libnotify"
-  "bluetui"
-  "wiremix"
-)
+load_packages() {
+  local file="$1"
+  if [ -f "$file" ]; then
+    mapfile -t "$2" < <(grep -v -E '^(\s*#|\s*$)' "$file")
+  else
+    echo -e "${YELLOW}Warning: File $file not found. Skipping.${NC}"
+    eval "$2=()"
+  fi
+}
 
-FONTS_PKGS=(
-  "noto-fonts"
-  "noto-fonts-cjk"
-  "noto-fonts-emoji"
-  "noto-fonts-extra"
-  "ttf-jetbrains-mono-nerd"
-)
-
-AUR_PKGS=(
-  "walker"
-  "elephant-all"
-  "hyprland-preview-share-picker-git"
-  "wayfreeze-git"
-  "tokyonight-gtk-theme-git"
-  "xdg-terminal-exec"
-)
-
-NVIDIA_PKGS=(
-  "dkms"
-  "nvidia-open-dkms"
-  "nvidia-utils"
-  "nvidia-settings"
-  "lib32-nvidia-utils"
-)
-
-PIPEWIRE_PKGS=(
-  "pipewire"
-  "lib32-pipewire"
-  "pipewire-alsa"
-  "pipewire-pulse"
-  "wireplumber"
-)
-
-CUPS_PKGS=(
-  "cups"
-  "gutenprint"
-  "ghostscript"
-)
-
-OTHER_PKGS=(
-  "xone-dkms"
-)
+load_packages "$PKGS_DIR/pacman.txt" PACMAN_PKGS
+load_packages "$PKGS_DIR/fonts.txt" FONTS_PKGS
+load_packages "$PKGS_DIR/aur.txt" AUR_PKGS
+load_packages "$PKGS_DIR/nvidia.txt" NVIDIA_PKGS
+load_packages "$PKGS_DIR/pipewire.txt" PIPEWIRE_PKGS
+load_packages "$PKGS_DIR/cups.txt" CUPS_PKGS
+load_packages "$PKGS_DIR/other.txt" OTHER_PKGS
 
 # Terminal colors
 GREEN='\033[0;32m'
@@ -317,5 +266,3 @@ while true; do
     ;;
   esac
 done
-
-```
