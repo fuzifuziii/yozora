@@ -258,13 +258,3 @@ hl.window_rule({
 	},
 	scroll_touchpad = 0.2,
 })
-
-hl.window_rule({
-	match = {
-		class = "^steamwebhelper$",
-		title = ".*Notification.*",
-	},
-	float = true,
-	pin = true,
-	no_focus = true,
-})
