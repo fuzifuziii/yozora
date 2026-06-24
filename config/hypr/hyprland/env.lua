@@ -1,6 +1,14 @@
+-- NVIDIA
 hl.env("NVD_BACKEND", "direct")
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("GBM_BACKEND", "nvidia-drm")
+
+-- NVIDIA test
+--hl.env("VK_DRIVER_FILES", "/usr/share/vulkan/icd.d/nvidia_icd.json")
+hl.env("__NV_PRIME_RENDER_OFFLOAD", "1")
+hl.env("__VK_LAYER_NV_optimus", "NVIDIA_only")
+
 hl.env("GUM_CONFIRM_PROMPT_FOREGROUND", "6;")
 hl.env("GUM_CONFIRM_SELECTED_FOREGROUND", "0;")
 hl.env("GUM_CONFIRM_SELECTED_BACKGROUND", "2;")
@@ -11,7 +19,6 @@ hl.env("HYPRCURSOR_SIZE", "20")
 hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("HYPRCURSOR_THEME", "Adwaita")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
-hl.env("QT_QPA_PLATFORMTHEME", "kde")
 hl.env("XDG_MENU_PREFIX", "plasma-")
 hl.env("SDL_VIDEODRIVER", "wayland")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
@@ -20,3 +27,5 @@ hl.env("OZONE_PLATFORM", "wayland")
 hl.env("XDG_SESSION_TYPE", "wayland")
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+hl.env("QT_QPA_PLATFORMTHEME", "kde")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")

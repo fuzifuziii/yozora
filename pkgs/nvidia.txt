@@ -3,3 +3,5 @@ nvidia-open-dkms
 nvidia-settings
 nvidia-utils
 lib32-nvidia-utils
+libva-nvidia-driver
+opencl-nvidia
