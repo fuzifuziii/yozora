@@ -23,7 +23,6 @@ hl.config({
 	ecosystem = {
 		no_update_news = true,
 	},
-	--exec-once=otd-daemon
 	general = {
 		allow_tearing = false,
 		border_size = 2,
