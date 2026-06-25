@@ -1,41 +1,13 @@
 #!/bin/bash
 
-##################################
-# Configuration and package list #
-##################################
-
 set -e
 
-PKGS_DIR="./pkgs"
-
 # Terminal colors
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-l_packages() {
-  local file="$1"
-  if [ -f "$file" ]; then
-    mapfile -t "$2" < <(grep -v -E '^(\s*#|\s*$)' "$file")
-  else
-    echo -e "${YELLOW}Warning: File $file not found. Skipping.${NC}"
-    eval "$2=()"
-  fi
-}
-
-l_packages "$PKGS_DIR/pacman.txt" PACMAN_PKGS
-l_packages "$PKGS_DIR/fonts.txt" FONTS_PKGS
-l_packages "$PKGS_DIR/aur.txt" AUR_PKGS
-l_packages "$PKGS_DIR/nvidia.txt" NVIDIA_PKGS
-l_packages "$PKGS_DIR/pipewire.txt" PIPEWIRE_PKGS
-l_packages "$PKGS_DIR/cups.txt" CUPS_PKGS
-l_packages "$PKGS_DIR/other.txt" OTHER_PKGS
-
-##############
-# Validation #
-##############
+export GREEN='\033[0;32m'
+export RED='\033[0;31m'
+export BLUE='\033[0;34m'
+export YELLOW='\033[1;33m'
+export NC='\033[0m'
 
 # Sudo
 if [ "$EUID" -eq 0 ]; then
@@ -44,221 +16,33 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # Distro
-if ! command -v pacman >/dev/null 2>&1; then
-  echo "This script is for Arch Linux only"
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  export DISTRO=$ID
+else
+  echo "Cannot determine OS distribution."
   exit 1
 fi
 
-####################
-# Helper functions #
-####################
+if [[ "$DISTRO" != "arch" && "$DISTRO" != "fedora" ]]; then
+  echo "This script only supports Arch Linux and Fedora."
+  exit 1
+fi
 
-e_multilib() {
-  if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
-    echo -e "${BLUE}Enabling multilib repository...${NC}"
-    sudo sed -i '/^#\[multilib\]/,/^#Include/s/^#//' /etc/pacman.conf
-  fi
-}
+SCRIPTS_DIR="./distro/$DISTRO/scripts"
 
-e_candy() {
-  if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
-    echo -e "${BLUE}Enabling ILoveCandy progress bar...${NC}"
-    sudo sed -i '/^# Misc options/a ILoveCandy' /etc/pacman.conf
-  fi
-}
+run_script() {
+  local script_name="$1"
+  local target="$SCRIPTS_DIR/$script_name"
 
-i_sudo() {
-  echo -e "${BLUE}Requesting administrator privileges...${NC}"
-  sudo true
-}
-
-i_yay() {
-  if ! command -v yay >/dev/null 2>&1; then
-    echo -e "${BLUE}yay not found. Installing...${NC}"
-
-    rm -rf /tmp/yay-build
-    mkdir -p /tmp/yay-build
-
-    git clone https://aur.archlinux.org/yay.git /tmp/yay-build/yay
-
-    pushd /tmp/yay-build/yay >/dev/null
-    makepkg -si --noconfirm
-    popd >/dev/null
-
-    rm -rf /tmp/yay-build
-
-    if ! command -v yay >/dev/null 2>&1; then
-      echo "Error: Failed to install yay."
-      exit 1
-    fi
-
-    echo -e "${GREEN}✓ yay installed successfully!${NC}"
-  fi
-}
-
-#######################
-# Necessary functions #
-#######################
-
-i_yozora() {
-  echo -e "${BLUE}=== Starting Yozora installation ===${NC}"
-
-  # Create directories
-  echo -e "\n${BLUE}[1/3] Creating directories...${NC}"
-  mkdir -p "$HOME/.config"
-  mkdir -p "$HOME/.local/share"
-
-  # Create backup directories
-  APPS_TO_CONFIG=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar)
-
-  BACKUP_DIR="$HOME/hypr-backup"
-  mkdir -p "$BACKUP_DIR/config"
-  mkdir -p "$BACKUP_DIR/local"
-
-  echo -e "\n${BLUE}[2/3] Copying selected configuration files and data...${NC}"
-
-  for app in "${APPS_TO_CONFIG[@]}"; do
-    if [ -d "config/$app" ]; then
-      if [ -d "$HOME/.config/$app" ]; then
-        echo -e "${YELLOW}Backing up old config/$app...${NC}"
-        rm -rf "$BACKUP_DIR/config/$app"
-        mv "$HOME/.config/$app" "$BACKUP_DIR/config/"
-      fi
-
-      cp -r "config/$app" "$HOME/.config/"
-      echo -e "${GREEN}✓ Updated config for: $app${NC}"
-    else
-      echo -e "${RED}Warning: folder config/$app not found, skipping.${NC}"
-    fi
-
-    if [ -d "local/$app" ]; then
-      if [ -d "$HOME/.local/share/$app" ]; then
-        echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
-        rm -rf "$BACKUP_DIR/local/$app"
-        mv "$HOME/.local/share/$app" "$BACKUP_DIR/local/"
-      fi
-
-      cp -r "local/$app" "$HOME/.local/share/"
-      echo -e "${GREEN}✓ Updated local/share for: $app${NC}"
-    fi
-  done
-
-  # Install theme for plasma
-  mkdir -p "$HOME/.local/share/color-schemes"
-  if [ -f "TokyoNight.colors" ]; then
-    cp "TokyoNight.colors" "$HOME/.local/share/color-schemes/TokyoNight.colors"
-    echo -e "${GREEN}✓ Color theme copied successfully${NC}"
-  fi
-
-  # Install packages
-  echo -e "\n${BLUE}[3/3] Installing packages...${NC}"
-
-  e_multilib
-  e_candy
-  i_sudo
-
-  echo -e "${BLUE}Updating system...${NC}"
-  sudo pacman -Syu --noconfirm
-
-  if [ ${#PACMAN_PKGS[@]} -gt 0 ]; then
-    echo -e "${BLUE}Installing packages via pacman...${NC}"
-    sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
-    sudo pacman -S --needed --noconfirm "${FONTS_PKGS[@]}"
-  fi
-
-  if [ ${#AUR_PKGS[@]} -gt 0 ]; then
-    i_yay
-    echo -e "${BLUE}Installing AUR packages via yay...${NC}"
-    yay -S --needed --noconfirm "${AUR_PKGS[@]}"
-  fi
-
-  # Set fish as the default shell
-  if command -v fish >/dev/null 2>&1; then
-    echo -e "\n${BLUE}Setting fish as the default shell...${NC}"
-    FISH_PATH=$(command -v fish)
-
-    if [ "$SHELL" != "$FISH_PATH" ]; then
-      if ! grep -q "^$FISH_PATH$" /etc/shells; then
-        echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
-      fi
-
-      if chsh -s "$FISH_PATH"; then
-        echo -e "${GREEN}✓ Default shell changed to fish${NC}"
-        echo -e "${YELLOW}⚠ Changes will take effect after logging out or rebooting${NC}"
-      else
-        echo -e "${YELLOW}⚠ Failed to change shell. You may need to enter your password manually${NC}"
-        echo -e "${YELLOW}   Or run manually: chsh -s $FISH_PATH${NC}"
-      fi
-    else
-      echo -e "${GREEN}✓ Fish is already the default shell${NC}"
-    fi
-  fi
-
-  # Apply the colorscheme if the utility is available
-  if command -v plasma-apply-colorscheme &>/dev/null; then
-    plasma-apply-colorscheme TokyoNight || true
+  if [ -f "$target" ]; then
+    bash "$target"
   else
-    # Fallback for plasma 6 configs
-    kwriteconfig6 --file kdeglobals --group General --key ColorScheme "Tokyo Night" || true
+    echo -e "${RED}Error: Script $target not found!${NC}"
   fi
-
-  # Enable display manager
-  echo -e "\n${BLUE}Enabling SDDM display manager...${NC}"
-  sudo systemctl enable sddm
-
-  # Disable gtk buttons
-  gsettings set org.gnome.desktop.wm.preferences button-layout ":"
-
-  # Enable elephant service
-  elephant service enable
-
-  echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
-  echo -e "${BLUE}Please reboot your system when ready.${NC}\n"
 }
 
-i_nvidia() {
-  echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
-  e_multilib
-  i_sudo
-  sudo pacman -Syu --needed --noconfirm "${NVIDIA_PKGS[@]}"
-  echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
-}
-
-i_pipewire() {
-  echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
-  e_multilib
-  i_sudo
-  sudo pacman -Syu --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
-  echo -e "${BLUE}Enabling and starting Pipewire user services...${NC}"
-  systemctl --user enable --now pipewire pipewire-pulse wireplumber
-  echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
-}
-
-i_cups() {
-  echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
-  i_sudo
-  sudo pacman -Syu --needed --noconfirm "${CUPS_PKGS[@]}"
-  echo -e "${BLUE}Enabling and starting CUPS services...${NC}"
-  sudo systemctl enable --now cups
-  echo -e "${GREEN}✓ CUPS drivers installed successfully!${NC}"
-}
-
-i_other() {
-  echo -e "\n${BLUE}Preparing to install xone drivers...${NC}"
-  i_yay
-  yay -S --needed --noconfirm "${OTHER_PKGS[@]}"
-  echo -e "${GREEN}✓ Xone drivers installed successfully!${NC}"
-}
-
-e_script() {
-  echo -e "\n${GREEN}Exiting. Bye!${NC}"
-  exit 0
-}
-
-####################
-# Interactive menu #
-####################
-
+# Interactive menu
 show_menu() {
   echo -e "\n${BLUE}=======================================${NC}"
   echo -e "${BLUE}         CONFIGURATION MENU            ${NC}"
@@ -276,12 +60,15 @@ while true; do
   show_menu
   read -r -p "Enter your choice [1-6]: " choice
   case $choice in
-  1) i_yozora ;;
-  2) i_nvidia ;;
-  3) i_pipewire ;;
-  4) i_cups ;;
-  5) i_other ;;
-  6) e_script ;;
+  1) run_script "i_yozora.sh" ;;
+  2) run_script "i_nvidia.sh" ;;
+  3) run_script "i_pipewire.sh" ;;
+  4) run_script "i_cups.sh" ;;
+  5) run_script "i_other.sh" ;;
+  6)
+    echo -e "\n${GREEN}Exiting. Bye!${NC}"
+    exit 0
+    ;;
   *) echo -e "\n${YELLOW}Invalid option. Please choose between 1 and 6.${NC}" ;;
   esac
 done
