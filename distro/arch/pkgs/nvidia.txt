@@ -5,3 +5,4 @@ nvidia-utils
 lib32-nvidia-utils
 libva-nvidia-driver
 opencl-nvidia
+libxnvctrl

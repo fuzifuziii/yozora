@@ -1,6 +1,6 @@
 # Yozora
 
-**IMPORTANT:** This installer and setup currently support **Arch Linux and Arch-based distributions only**. Running it on other distributions is not supported.
+**IMPORTANT:** This installer and setup currently support **Arch Linux and Fedora only**. Running it on other distributions is not supported.
 
 ## Included Software
 
