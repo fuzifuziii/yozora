@@ -16,8 +16,9 @@ echo -e "\n${BLUE}[1/3] Creating directories...${NC}"
 mkdir -p "$HOME/.config"
 mkdir -p "$HOME/.local/share"
 
-# Create backup directories
-APPS_TO_CONFIG=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar)
+# Separate arrays for .config and .local/share
+CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar)
+LOCAL_SHARE_APPS=(fuzi)
 
 BACKUP_DIR="$HOME/hypr-backup"
 mkdir -p "$BACKUP_DIR/config"
@@ -25,7 +26,8 @@ mkdir -p "$BACKUP_DIR/local"
 
 echo -e "\n${BLUE}[2/3] Copying selected configuration files and data...${NC}"
 
-for app in "${APPS_TO_CONFIG[@]}"; do
+# Processing configurations (.config)
+for app in "${CONFIG_APPS[@]}"; do
   if [ -d "config/$app" ]; then
     if [ -d "$HOME/.config/$app" ]; then
       echo -e "${YELLOW}Backing up old config/$app...${NC}"
@@ -38,7 +40,10 @@ for app in "${APPS_TO_CONFIG[@]}"; do
   else
     echo -e "${RED}Warning: folder config/$app not found, skipping.${NC}"
   fi
+done
 
+# Processing data (.local/share)
+for app in "${LOCAL_SHARE_APPS[@]}"; do
   if [ -d "local/$app" ]; then
     if [ -d "$HOME/.local/share/$app" ]; then
       echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
@@ -48,6 +53,8 @@ for app in "${APPS_TO_CONFIG[@]}"; do
 
     cp -r "local/$app" "$HOME/.local/share/"
     echo -e "${GREEN}✓ Updated local/share for: $app${NC}"
+  else
+    echo -e "${RED}Warning: folder local/$app not found, skipping.${NC}"
   fi
 done
 
