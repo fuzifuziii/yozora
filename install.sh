@@ -222,7 +222,7 @@ i_xone() {
 c_menu() {
   while true; do
     s_cachy
-    read -rp "Enter your choice [1-2]: " choice
+    read -rp "Enter your choice [1-3]: " choice
 
     case "$choice" in
     1)
@@ -276,7 +276,7 @@ i_nvidia580() {
 # Main menu
 s_menu() {
   echo -e "\n${BLUE}=======================================${NC}"
-  echo -e "${BLUE}         CONFIGURATION MENU            ${NC}"
+  echo -e "${BLUE}           CONFIGURATION MENU            ${NC}"
   echo -e "${BLUE}=======================================${NC}"
   echo -e "1) Install Yozora"
   echo -e "2) CachyOS menu"
@@ -285,12 +285,12 @@ s_menu() {
   echo -e "5) Install CUPS"
   echo -e "6) Install Xone drivers"
   echo -e "7) Exit"
-  echo -e "${BLUE}=================V2.0===================${NC}"
+  echo -e "${BLUE}=================V2.0==================${NC}"
 }
 
 s_cachy() {
   echo -e "\n${BLUE}=======================================${NC}"
-  echo -e "${BLUE}       CACHYOS REPOSITORY MENU         ${NC}"
+  echo -e "${BLUE}        CACHYOS REPOSITORY MENU         ${NC}"
   echo -e "${BLUE}=======================================${NC}"
 
   if pacman -Qq cachyos-keyring &>/dev/null; then
@@ -301,7 +301,7 @@ s_cachy() {
 
   echo -e "2) Install 580x NVIDIA drivers"
   echo -e "3) Back"
-  echo -e "${BLUE}=================V2.0===================${NC}"
+  echo -e "${BLUE}=================V2.0==================${NC}"
 }
 
 while true; do
