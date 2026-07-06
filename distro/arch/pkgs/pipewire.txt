@@ -1,5 +1,0 @@
-pipewire
-lib32-pipewire
-pipewire-alsa
-pipewire-pulse
-wireplumber
