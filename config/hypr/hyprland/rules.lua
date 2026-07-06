@@ -48,13 +48,6 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		title = "playit",
-	},
-	float = true,
-})
-
-hl.window_rule({
-	match = {
 		class = "^(1[p|P]assword)$",
 	},
 	no_screen_share = true,
@@ -196,14 +189,14 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "(org.fuzi.nmtui|org.fuzi.bluetui|org.fuzi.impala|org.fuzi.wiremix|org.fuzi.btop|org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv|org.kde.gwenview|org.fuzi.playit)",
+		class = "(org.fuzi.nmtui|org.fuzi.bluetui|org.fuzi.impala|org.fuzi.wiremix|org.fuzi.btop|org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|About|TUI.float|imv|mpv|org.kde.gwenview|org.fuzi.playit)",
 	},
 	tag = "+floating-window",
 })
 
 hl.window_rule({
 	match = {
-		class = "(xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus)",
+		class = "(xdg-desktop-portal-gtk|xdg-desktop-portal-kde|sublime_text|DesktopEditors|org.gnome.Nautilus|org.kde.dolphin)",
 		title = "^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)",
 	},
 	tag = "+floating-window",
@@ -218,15 +211,7 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "org.fuzi.screensaver",
-	},
-	fullscreen = true,
-	float = true,
-})
-
-hl.window_rule({
-	match = {
-		class = "^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$",
+		class = "^(resolve|zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$",
 	},
 	opacity = "1 1",
 })

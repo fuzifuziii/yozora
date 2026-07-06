@@ -17,10 +17,10 @@ mkdir -p "$HOME/.config"
 mkdir -p "$HOME/.local/share"
 
 # Separate arrays for .config and .local/share
-CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar)
+CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar xdg-desktop-portal)
 LOCAL_SHARE_APPS=(fuzi)
 
-BACKUP_DIR="$HOME/hypr-backup"
+BACKUP_DIR="$HOME/yozora-backup"
 mkdir -p "$BACKUP_DIR/config"
 mkdir -p "$BACKUP_DIR/local"
 
