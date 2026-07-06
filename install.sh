@@ -36,11 +36,11 @@ else
 fi
 
 if [[ "$DISTRO" != "arch" ]]; then
-  echo "This consolidated script currently supports Arch Linux only (due to pacman/yay logic)."
+  echo "This script supports Arch Linux and Arch-based only."
   exit 1
 fi
 
-# 3. Helper functions
+# Helper functions
 e_multilib() {
   if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
     echo -e "${BLUE}Enabling multilib repository...${NC}"
@@ -74,7 +74,6 @@ i_yay() {
 }
 
 # Installation functions
-
 i_yozora() {
   echo -e "${BLUE}=== Starting Yozora installation ===${NC}"
 
@@ -273,7 +272,7 @@ i_nvidia580() {
   echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
 }
 
-# Main menu
+# Menu
 s_menu() {
   echo -e "\n${BLUE}=======================================${NC}"
   echo -e "${BLUE}           CONFIGURATION MENU            ${NC}"
