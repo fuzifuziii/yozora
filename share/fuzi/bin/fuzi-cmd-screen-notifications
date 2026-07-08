@@ -1,0 +1,16 @@
+#!/bin/bash
+
+FILE="$HOME/.config/hypr/hyprland/rules.lua"
+
+if [ ! -f "$FILE" ]; then
+  echo "Error: File $FILE not found!"
+  exit 1
+fi
+
+if grep -Pzqa 'hl\.layer_rule\(\{\s*match = \{\s*namespace = "notifications"\s*\},\s*no_screen_share = true,?\s*\}\)' "$FILE"; then
+  perl -i -0777 -pe 's/(hl\.layer_rule\(\{\s*match = \{\s*namespace = "notifications"\s*\},\s*no_screen_share = )true(.*\}\))/${1}false${2}/s' "$FILE"
+  notify-send "Screenshare for Notifications is now allowed" -u critical -t 3000
+else
+  perl -i -0777 -pe 's/(hl\.layer_rule\(\{\s*match = \{\s*namespace = "notifications"\s*\},\s*no_screen_share = )false(.*\}\))/${1}true${2}/s' "$FILE"
+  notify-send "Screenshare for Notifications is now blocked" -u critical -t 3000
+fi

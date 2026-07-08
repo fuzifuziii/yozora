@@ -34,7 +34,7 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "org.telegram.desktop",
+		class = "(org.telegram.desktop|AyuGram)",
 	},
 	no_screen_share = true,
 })

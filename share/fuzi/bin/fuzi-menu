@@ -31,7 +31,7 @@ menu() {
 
 show_background_menu() {
   if [[ ! -d "$FUZI_PATH" ]]; then
-    notify-send -u critical "Ошибка Обоев" "Папка не найдена: $FUZI_PATH"
+    notify-send -u critical "Wallpaper Error" "Folder not found: $FUZI_PATH"
     return 1
   fi
 
@@ -39,7 +39,7 @@ show_background_menu() {
   wp_options=$(find -L "$FUZI_PATH" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) -printf "%f\n" | sort)
 
   if [[ -z "$wp_options" ]]; then
-    notify-send -u critical "Ошибка Обоев" "В папке $FUZI_PATH нет картинок (.jpg, .png, .webp)"
+    notify-send -u critical "Wallpaper Error" "No images found in $FUZI_PATH (.jpg, .png, .webp)"
     return 1
   fi
 
@@ -51,26 +51,51 @@ show_background_menu() {
   fi
 
   local selected_file
-  selected_file=$(menu "Wallpapers" "$wp_options" "" "$current_bg_name")
+  selected_file=$(menu "Search..." "$wp_options" "" "$current_bg_name")
 
   if [[ -n "$selected_file" ]]; then
     fuzi-theme-bg-set "$FUZI_PATH/$selected_file"
   fi
 }
 
-show_main_menu() {
+show_screen_menu() {
+  local screen_options="󰂛  Notifications\n  Telegram"
 
-  local options="󰂛  Notifications\n  Screenshot Save\n  Wallpaper"
+  case $(menu "Search..." "$screen_options") in
+  *Notifications*)
+    fuzi-cmd-screen-notifications
+    ;;
+  *Telegram*)
+    fuzi-cmd-screen-telegram
+    ;;
+  esac
+}
+
+show_toggle_menu() {
+  local toggle_options="  Screenshot save"
+
+  case $(menu "Search..." "$toggle_options") in
+  *Screenshot*)
+    fuzi-toggle-screenshot
+    ;;
+  esac
+}
+
+show_main_menu() {
+  local options="󰂛  Notifications\n󰹑  Screen\n  Toggle\n  Wallpaper"
 
   case $(menu "Search..." "$options") in
   *Notifications*)
     fuzi-toggle-notification-silencing
     ;;
+  *Screen*)
+    show_screen_menu
+    ;;
+  *Toggle*)
+    show_toggle_menu
+    ;;
   *Wallpaper*)
     show_background_menu
-    ;;
-  *Screenshot*)
-    fuzi-toggle-screenshot
     ;;
   esac
 }
