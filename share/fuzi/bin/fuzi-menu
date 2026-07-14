@@ -72,9 +72,12 @@ show_screen_menu() {
 }
 
 show_toggle_menu() {
-  local toggle_options="  Screenshot save"
+  local toggle_options="󰂛  Notifications\n  Screenshot save"
 
   case $(menu "Search..." "$toggle_options") in
+  *Notifications*)
+    fuzi-toggle-notification-silencing
+    ;;
   *Screenshot*)
     fuzi-toggle-screenshot
     ;;
@@ -82,20 +85,17 @@ show_toggle_menu() {
 }
 
 show_main_menu() {
-  local options="󰂛  Notifications\n󰹑  Screen\n  Toggle\n  Wallpaper"
+  local options="  Wallpaper\n  Toggle\n󰹑  Screen"
 
   case $(menu "Search..." "$options") in
-  *Notifications*)
-    fuzi-toggle-notification-silencing
-    ;;
-  *Screen*)
-    show_screen_menu
+  *Wallpaper*)
+    show_background_menu
     ;;
   *Toggle*)
     show_toggle_menu
     ;;
-  *Wallpaper*)
-    show_background_menu
+  *Screen*)
+    show_screen_menu
     ;;
   esac
 }
