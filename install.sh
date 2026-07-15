@@ -27,16 +27,8 @@ if [ "$EUID" -eq 0 ]; then
   exit 1
 fi
 
-if [ -f /etc/os-release ]; then
-  . /etc/os-release
-  export DISTRO=$ID
-else
-  echo "Cannot determine OS distribution."
-  exit 1
-fi
-
-if [[ "$DISTRO" != "arch" ]]; then
-  echo "This script supports Arch Linux and Arch-based only."
+if ! command -v pacman >/dev/null 2>&1; then
+  echo "This script supports Arch Linux and Arch-based only"
   exit 1
 fi
 
@@ -81,6 +73,7 @@ i_yozora() {
   mkdir -p "$HOME/.config"
   mkdir -p "$HOME/.local/share"
 
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar xdg-desktop-portal)
   LOCAL_SHARE_APPS=(fuzi)
 
@@ -91,36 +84,36 @@ i_yozora() {
   echo -e "\n${BLUE}[2/3] Copying selected configuration files and data...${NC}"
 
   for app in "${CONFIG_APPS[@]}"; do
-    if [ -d "config/$app" ]; then
+    SRC_CONFIG="$SCRIPT_DIR/config/$app"
+    if [ -d "$SRC_CONFIG" ]; then
       if [ -d "$HOME/.config/$app" ]; then
         echo -e "${YELLOW}Backing up old config/$app...${NC}"
         rm -rf "$BACKUP_DIR/config/$app"
         mv "$HOME/.config/$app" "$BACKUP_DIR/config/"
       fi
-      cp -r "config/$app" "$HOME/.config/"
+      cp -r "$SRC_CONFIG" "$HOME/.config/"
       echo -e "${GREEN}✓ Updated config for: $app${NC}"
     else
-      echo -e "${RED}Warning: folder config/$app not found, skipping.${NC}"
+      echo -e "${RED}Warning: folder config/$app not found at $SRC_CONFIG, skipping.${NC}"
     fi
   done
 
-  for app in "${LOCAL_SHARE_APPS[@]}"; do
-    if [ -d "local/$app" ]; then
+  if [ -n "$SRC_LOCAL" ]; then
       if [ -d "$HOME/.local/share/$app" ]; then
         echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
         rm -rf "$BACKUP_DIR/local/$app"
         mv "$HOME/.local/share/$app" "$BACKUP_DIR/local/"
       fi
-      cp -r "local/$app" "$HOME/.local/share/"
+      cp -r "$SRC_LOCAL" "$HOME/.local/share/"
       echo -e "${GREEN}✓ Updated local/share for: $app${NC}"
     else
-      echo -e "${RED}Warning: folder local/$app not found, skipping.${NC}"
+      echo -e "${RED}Warning: folder for $app not found in local/ or local/share/, skipping.${NC}"
     fi
   done
 
   mkdir -p "$HOME/.local/share/color-schemes"
-  if [ -f "TokyoNight.colors" ]; then
-    cp "TokyoNight.colors" "$HOME/.local/share/color-schemes/TokyoNight.colors"
+  if [ -f "$SCRIPT_DIR/TokyoNight.colors" ]; then
+    cp "$SCRIPT_DIR/TokyoNight.colors" "$HOME/.local/share/color-schemes/TokyoNight.colors"
     echo -e "${GREEN}✓ Color theme copied successfully${NC}"
   fi
 
@@ -284,7 +277,7 @@ s_menu() {
   echo -e "5) Install CUPS"
   echo -e "6) Install Xone drivers"
   echo -e "7) Exit"
-  echo -e "${BLUE}=================V2.0==================${NC}"
+  echo -e "${BLUE}=================V2.1==================${NC}"
 }
 
 s_cachy() {
@@ -300,7 +293,7 @@ s_cachy() {
 
   echo -e "2) Install 580x NVIDIA drivers"
   echo -e "3) Back"
-  echo -e "${BLUE}=================V2.0==================${NC}"
+  echo -e "${BLUE}=================V2.1==================${NC}"
 }
 
 while true; do
