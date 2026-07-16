@@ -14,7 +14,7 @@
 | Launcher        | Walker    |
 | System Info     | Fastfetch |
 | Monitor         | Btop      |
-| Session Manager | uwsm      |
+| Session Manager | UWSM      |
 
 ## Installation
 
@@ -36,6 +36,7 @@ Run the installer:
 | Bind            | Module    |
 | --------------- | --------- |
 | Super           | Apps      |
+| Super + D       | Menu      |
 | Super + K       | Binds     |
 | Super + V       | Clipboard |
 | Super + Period  | Symbol    |

@@ -3,15 +3,14 @@
 set -e
 
 # Packages
+BASE_PKGS=(base-devel)
 CUPS_PKGS=(cups gutenprint ghostscript)
-NVIDIA_LATEST_PKGS=(dkms nvidia-open-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libva-nvidia-driver opencl-nvidia libxnvctrl)
-NVIDIA_580_PKGS=(dkms lib32-nvidia-580xx-utils nvidia-580xx-open-dkms nvidia-580xx-settings nvidia-580xx-utils opencl-nvidia-580xx libxnvctrl-580xx lib32-opencl-nvidia-580xx)
+NVIDIA_PKGS=(dkms nvidia-open-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libva-nvidia-driver opencl-nvidia libxnvctrl)
 PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)
 OTHER_PKGS=(xone-dkms)
 
 # Packages for Yozora
-BASE_PKGS=(base-devel)
-PACMAN_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace uwsm waybar slurp grim polkit-kde-agent systemsettings swaybg libnotify bluetui wiremix pamixer)
+PACMAN_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace uwsm waybar slurp grim polkit-kde-agent systemsettings awww libnotify bluetui wiremix pamixer)
 FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetbrains-mono-nerd)
 AUR_PKGS=(walker elephant-all hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
@@ -186,7 +185,7 @@ i_nvidia() {
   echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
   e_multilib
   sudo true
-  sudo pacman -S --needed --noconfirm "${NVIDIA_LATEST_PKGS[@]}"
+  sudo pacman -S --needed --noconfirm "${NVIDIA_PKGS[@]}"
   echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
 }
 
