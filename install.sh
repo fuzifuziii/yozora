@@ -244,6 +244,6 @@ while true; do
     echo -e "\n${GREEN}Exiting. Bye!${NC}"
     exit 0
     ;;
-  *) echo -e "\n${YELLOW}Invalid option. Please choose between 1 and 7.${NC}" ;;
+  *) echo -e "\n${YELLOW}Invalid option. Please choose between 1 and 6.${NC}" ;;
   esac
 done

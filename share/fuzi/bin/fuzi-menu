@@ -85,7 +85,7 @@ show_toggle_menu() {
 }
 
 show_settings_menu() {
-  local settings_options="󰤨  Network\n Bluetooth\n󰍛 Btop"
+  local settings_options="󰤨  Network\n  Bluetooth\n󰍛  Btop"
 
   case $(menu "Search..." "$settings_options") in
   *Network*)
