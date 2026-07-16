@@ -10,7 +10,8 @@ PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)
 OTHER_PKGS=(xone-dkms)
 
 # Packages for Yozora
-PACMAN_PKGS=(base-devel sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace uwsm waybar slurp grim polkit-kde-agent systemsettings swaybg libnotify bluetui wiremix pamixer)
+BASE_PKGS=(base-devel)
+PACMAN_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace uwsm waybar slurp grim polkit-kde-agent systemsettings swaybg libnotify bluetui wiremix pamixer)
 FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetbrains-mono-nerd)
 AUR_PKGS=(walker elephant-all hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
@@ -98,7 +99,9 @@ i_yozora() {
     fi
   done
 
-  if [ -n "$SRC_LOCAL" ]; then
+  for app in "${LOCAL_SHARE_APPS[@]}"; do
+    SRC_LOCAL="$SCRIPT_DIR/share/$app"
+    if [ -n "$SRC_LOCAL" ]; then
       if [ -d "$HOME/.local/share/$app" ]; then
         echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
         rm -rf "$BACKUP_DIR/local/$app"
@@ -125,19 +128,22 @@ i_yozora() {
   echo -e "${BLUE}Updating system...${NC}"
   sudo pacman -Syu --noconfirm
 
+  echo -e "${BLUE}Installing base packages...${NC}"
+  sudo pacman -S --needed --noconfirm "${BASE_PKGS[@]}"
+
   if [ ${#PACMAN_PKGS[@]} -gt 0 ]; then
-    echo -e "${BLUE}Installing packages via pacman...${NC}"
+    echo -e "${BLUE}Installing dots...${NC}"
     sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
   fi
 
   if [ ${#FONTS_PKGS[@]} -gt 0 ]; then
-    echo -e "${BLUE}Installing fonts via pacman...${NC}"
+    echo -e "${BLUE}Installing fonts...${NC}"
     sudo pacman -S --needed --noconfirm "${FONTS_PKGS[@]}"
   fi
 
   if [ ${#AUR_PKGS[@]} -gt 0 ]; then
     i_yay
-    echo -e "${BLUE}Installing AUR packages via yay...${NC}"
+    echo -e "${BLUE}Installing AUR packages...${NC}"
     yay -S --needed --noconfirm "${AUR_PKGS[@]}"
   fi
 
@@ -176,11 +182,11 @@ i_yozora() {
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
 }
 
-i_nvidiaL() {
+i_nvidia() {
   echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
   e_multilib
   sudo true
-  sudo pacman -Syu --needed --noconfirm "${NVIDIA_LATEST_PKGS[@]}"
+  sudo pacman -S --needed --noconfirm "${NVIDIA_LATEST_PKGS[@]}"
   echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
 }
 
@@ -188,7 +194,7 @@ i_pipewire() {
   echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
   e_multilib
   sudo true
-  sudo pacman -Syu --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
+  sudo pacman -S --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
   echo -e "${BLUE}Enabling and starting Pipewire user services...${NC}"
   systemctl --user enable --now pipewire pipewire-pulse wireplumber
   echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
@@ -197,7 +203,7 @@ i_pipewire() {
 i_cups() {
   echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
   sudo true
-  sudo pacman -Syu --needed --noconfirm "${CUPS_PKGS[@]}"
+  sudo pacman -S --needed --noconfirm "${CUPS_PKGS[@]}"
   echo -e "${BLUE}Enabling and starting CUPS services...${NC}"
   sudo systemctl enable --now cups
   echo -e "${GREEN}✓ CUPS drivers installed successfully!${NC}"
@@ -205,64 +211,11 @@ i_cups() {
 
 i_xone() {
   echo -e "\n${BLUE}Preparing to install other drivers/packages...${NC}"
+  sudo true
+  sudo pacman -S --needed --noconfirm "${BASE_PKGS[@]}"
   i_yay
   yay -S --needed --noconfirm "${OTHER_PKGS[@]}"
   echo -e "${GREEN}✓ Other packages installed successfully!${NC}"
-}
-
-# CachyOS repository
-c_menu() {
-  while true; do
-    s_cachy
-    read -rp "Enter your choice [1-3]: " choice
-
-    case "$choice" in
-    1)
-      i_cachy
-      ;;
-    2)
-      i_nvidia580
-      ;;
-    3)
-      break
-      ;;
-    *)
-      echo -e "${YELLOW}Invalid option. Please choose between 1 and 3.${NC}"
-      ;;
-    esac
-  done
-}
-
-i_cachy() {
-  echo -e "\n${BLUE}Checking CachyOS repository...${NC}"
-
-  TMP_DIR=$(mktemp -d)
-
-  curl -Ls https://mirror.cachyos.org/cachyos-repo.tar.xz -o "$TMP_DIR/cachyos-repo.tar.xz"
-  tar -xf "$TMP_DIR/cachyos-repo.tar.xz" -C "$TMP_DIR"
-
-  pushd "$TMP_DIR/cachyos-repo" >/dev/null
-
-  if grep -q "^\[cachyos" /etc/pacman.conf; then
-    echo -e "${YELLOW}CachyOS repository detected. Removing...${NC}"
-    sudo ./cachyos-repo.sh --remove
-    echo -e "${GREEN}✓ CachyOS repository removed successfully!${NC}"
-  else
-    echo -e "${BLUE}CachyOS repository not found. Installing...${NC}"
-    sudo ./cachyos-repo.sh
-    echo -e "${GREEN}✓ CachyOS repository installed successfully!${NC}"
-  fi
-
-  popd >/dev/null
-  rm -rf "$TMP_DIR"
-}
-
-i_nvidia580() {
-  echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
-  e_multilib
-  sudo true
-  sudo pacman -Syu --needed --noconfirm "${NVIDIA_580_PKGS[@]}"
-  echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
 }
 
 # Menu
@@ -271,42 +224,24 @@ s_menu() {
   echo -e "${BLUE}           CONFIGURATION MENU            ${NC}"
   echo -e "${BLUE}=======================================${NC}"
   echo -e "1) Install Yozora"
-  echo -e "2) CachyOS menu"
-  echo -e "3) Install latest NVIDIA drivers"
-  echo -e "4) Install PipeWire"
-  echo -e "5) Install CUPS"
-  echo -e "6) Install Xone drivers"
-  echo -e "7) Exit"
-  echo -e "${BLUE}=================V2.1==================${NC}"
-}
-
-s_cachy() {
-  echo -e "\n${BLUE}=======================================${NC}"
-  echo -e "${BLUE}        CACHYOS REPOSITORY MENU         ${NC}"
-  echo -e "${BLUE}=======================================${NC}"
-
-  if pacman -Qq cachyos-keyring &>/dev/null; then
-    echo -e "1) Uninstall CachyOS repository"
-  else
-    echo -e "1) Install CachyOS repository"
-  fi
-
-  echo -e "2) Install 580x NVIDIA drivers"
-  echo -e "3) Back"
+  echo -e "2) Install latest NVIDIA drivers"
+  echo -e "3) Install PipeWire"
+  echo -e "4) Install CUPS"
+  echo -e "5) Install Xone drivers"
+  echo -e "6) Exit"
   echo -e "${BLUE}=================V2.1==================${NC}"
 }
 
 while true; do
   s_menu
-  read -r -p "Enter your choice [1-7]: " choice
+  read -r -p "Enter your choice [1-6]: " choice
   case $choice in
   1) i_yozora ;;
-  2) c_menu ;;
-  3) i_nvidiaL ;;
-  4) i_pipewire ;;
-  5) i_cups ;;
-  6) i_xone ;;
-  7)
+  2) i_nvidia ;;
+  3) i_pipewire ;;
+  4) i_cups ;;
+  5) i_xone ;;
+  6)
     echo -e "\n${GREEN}Exiting. Bye!${NC}"
     exit 0
     ;;

@@ -5,7 +5,8 @@ hl.on("hyprland.start", function()
 
 	hl.exec_cmd("uwsm-app -- mako")
 	hl.exec_cmd("uwsm-app -- waybar --config ~/.config/waybar/config --style ~/.config/waybar/theme/waybar.css")
-	hl.exec_cmd("uwsm-app -- swaybg -i ~/.local/share/fuzi/background -m fill")
+	hl.exec_cmd("uwsm-app -- awww-daemon")
+	hl.exec_cmd("bash -c 'sleep 0.5 && awww img ~/.local/share/fuzi/background'")
 	hl.exec_cmd("uwsm-app -- bitwarden-desktop")
 
 	hl.exec_cmd("uwsm-app -- swayosd-server")

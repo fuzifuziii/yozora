@@ -17,5 +17,6 @@ fi
 ln -nsf "$BACKGROUND" "$CURRENT_BACKGROUND_LINK"
 
 # Kill existing swaybg and start new one
-pkill -x swaybg
-setsid uwsm-app -- swaybg -i "$CURRENT_BACKGROUND_LINK" -m fill >/dev/null 2>&1 &
+pgrep -x awww-daemon >/dev/null || setsid uwsm-app -- awww-daemon >/dev/null 2>&1 &
+sleep 0.3
+awww img "$CURRENT_BACKGROUND_LINK" --transition-type simple

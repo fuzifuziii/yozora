@@ -84,10 +84,29 @@ show_toggle_menu() {
   esac
 }
 
+show_settings_menu() {
+  local settings_options="󰤨  Network\n Bluetooth\n󰍛 Btop"
+
+  case $(menu "Search..." "$settings_options") in
+  *Network*)
+    fuzi-launch-or-focus-tui nmtui
+    ;;
+  *Bluetooth*)
+    fuzi-launch-bluetooth
+    ;;
+  *Btop*)
+    fuzi-launch-or-focus-tui btop
+    ;;
+  esac
+}
+
 show_main_menu() {
-  local options="  Wallpaper\n  Toggle\n󰹑  Screen"
+  local options="  Settings\n  Wallpaper\n  Toggle\n󰹑  Screen"
 
   case $(menu "Search..." "$options") in
+  *Settings*)
+    show_settings_menu
+    ;;
   *Wallpaper*)
     show_background_menu
     ;;
@@ -102,4 +121,20 @@ show_main_menu() {
 
 toggle_existing_menu
 
-show_main_menu
+case "$1" in
+settings)
+  show_settings_menu
+  ;;
+wallpaper)
+  show_background_menu
+  ;;
+toggle)
+  show_toggle_menu
+  ;;
+screen)
+  show_screen_menu
+  ;;
+*)
+  show_main_menu
+  ;;
+esac

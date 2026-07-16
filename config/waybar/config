@@ -38,6 +38,7 @@
         "critical": 10,
         "warning": 20
       },
+      "tooltip-format-plugged": "Plugged",
       "tooltip-format-charging": "{power:>1.0f}W↑ {capacity}%",
       "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%"
     },
@@ -67,6 +68,10 @@
       "format-ru": "RU",
       "interval": 5,
       "on-click": ""
+    },
+    "custom/settings": {
+      "format": " ",
+      "on-click": "fuzi-menu settings",
     },
     "hyprland/workspaces": {
       "format": "{icon}",
@@ -112,7 +117,8 @@
       "network",
       "pulseaudio",
       "cpu",
-      "battery"
+      "battery",
+      "custom/settings"
     ],
     "network": {
       "format": "{icon}",
