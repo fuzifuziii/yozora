@@ -228,7 +228,7 @@ s_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install Xone drivers"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V2.1==================${NC}"
+  echo -e "${BLUE}=================V2.2==================${NC}"
 }
 
 while true; do

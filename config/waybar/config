@@ -71,6 +71,7 @@
     },
     "custom/settings": {
       "format": " ",
+      "tooltip-format": "Settings",
       "on-click": "fuzi-menu settings",
     },
     "hyprland/workspaces": {
