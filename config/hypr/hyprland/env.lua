@@ -32,3 +32,10 @@ hl.env("NVD_BACKEND", "direct")
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("GBM_BACKEND", "nvidia-drm")
+
+-- Test --
+hl.env("TERMINAL", "xdg-terminal-exec")
+hl.env("EDITOR", "nvim")
+
+hl.env("FUZI_PATH", os.getenv("HOME") .. "/.local/share/fuzi")
+hl.env("PATH", os.getenv("FUZI_PATH") .. "/bin:" .. os.getenv("FUZI_PATH") .. "/pg:" .. os.getenv("PATH"))

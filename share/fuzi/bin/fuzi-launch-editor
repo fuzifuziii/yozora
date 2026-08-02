@@ -7,6 +7,6 @@ nvim | vim | nano | micro | hx | helix)
   exec fuzi-launch-tui "$EDITOR" "$@"
   ;;
 *)
-  exec setsid uwsm-app -- "$EDITOR" "$@"
+  exec setsid "$EDITOR" "$@"
   ;;
 esac

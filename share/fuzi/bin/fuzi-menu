@@ -89,7 +89,7 @@ show_settings_menu() {
 
   case $(menu "Search..." "$settings_options") in
   *Network*)
-    fuzi-launch-or-focus-tui nmtui
+    fuzi-launch-wifi
     ;;
   *Bluetooth*)
     fuzi-launch-bluetooth

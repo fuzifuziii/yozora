@@ -232,8 +232,6 @@ dynamic_bindings() {
 
       modifiers=$(modmask_to_text "$modmask")
       arg="${arg//~\/.local\/share\/fuzi\/bin\//}"
-      arg="${arg//uwsm app -- /}"
-      arg="${arg//uwsm-app -- /}"
 
       printf '%s,%s,%s,%s,%s\n' "$modifiers" "$key" "$description" "$dispatcher" "$arg"
     done
