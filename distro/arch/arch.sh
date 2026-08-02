@@ -84,7 +84,7 @@ i_yozora() {
 
   for app in "${LOCAL_SHARE_APPS[@]}"; do
     SRC_LOCAL="$REPO_ROOT/share/$app"
-    if [ -n "$SRC_LOCAL" ]; then
+    if [ -d "$SRC_LOCAL" ]; then
       if [ -d "$HOME/.local/share/$app" ]; then
         echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
         rm -rf "$BACKUP_DIR/local/$app"
@@ -156,7 +156,7 @@ i_yozora() {
 
   echo -e "\n${BLUE}Enabling SDDM display manager...${NC}"
   sudo systemctl enable sddm
-  gsettings set org.gnome.desktop.wm.preferences button-layout ":"
+  gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
   if command -v elephant &>/dev/null; then
     elephant service enable || true

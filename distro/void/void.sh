@@ -44,10 +44,10 @@ i_src() {
   ./xbps-src binary-bootstrap
 
   echo -e "\n${BLUE}Building all custom packages at once...${NC}"
-  ./xbps-src pkg "${CUSTOM_SRC_PKGS[@]}"
+  ./xbps-src pkg "${SRC_PKGS[@]}"
 
   echo -e "\n${BLUE}Installing packages...${NC}"
-  for pkg in "${CUSTOM_SRC_PKGS[@]}"; do
+  for pkg in "${SRC_PKGS[@]}"; do
     echo -e "${BLUE}Installing $pkg...${NC}"
     sudo xi "$pkg"
   done
@@ -58,9 +58,12 @@ i_src() {
 e_xrepos() {
   echo -e "${BLUE}Enabling hyprland and xlibre repositories...${NC}"
   sudo mkdir -p /etc/xbps.d
-  sudo cp /usr/share/xbps.d/00-repository-main.conf /etc/xbps.d/
-  sudo sed -i "1i repository=https://mirror.black-hole.dev/$(xbps-uhelper arch)" /etc/xbps.d/00-repository-main.conf
-  printf "repository=https://github.com/xlibre-void/xlibre/releases/latest/download/" | sudo tee /etc/xbps.d/99-repository-xlibre.conf
+  MIRROR_LINE="repository=https://mirror.black-hole.dev/$(xbps-uhelper arch)"
+  if [ ! -f /etc/xbps.d/00-repository-main.conf ] || ! grep -qF "$MIRROR_LINE" /etc/xbps.d/00-repository-main.conf; then
+    sudo cp /usr/share/xbps.d/00-repository-main.conf /etc/xbps.d/
+    sudo sed -i "1i $MIRROR_LINE" /etc/xbps.d/00-repository-main.conf
+  fi
+  printf "repository=https://github.com/xlibre-void/xlibre/releases/latest/download/" | sudo tee /etc/xbps.d/99-repository-xlibre.conf >/dev/null
   sudo xbps-install -S
 }
 
@@ -101,7 +104,7 @@ i_yozora() {
 
   for app in "${LOCAL_SHARE_APPS[@]}"; do
     SRC_LOCAL="$REPO_ROOT/share/$app"
-    if [ -n "$SRC_LOCAL" ]; then
+    if [ -d "$SRC_LOCAL" ]; then
       if [ -d "$HOME/.local/share/$app" ]; then
         echo -e "${YELLOW}Backing up old local/share/$app...${NC}"
         rm -rf "$BACKUP_DIR/local/$app"
@@ -175,7 +178,7 @@ i_yozora() {
     echo -e "${GREEN}✓ SDDM service enabled${NC}"
   fi
 
-  gsettings set org.gnome.desktop.wm.preferences button-layout ":"
+  gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
 }

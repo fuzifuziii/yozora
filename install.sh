@@ -18,10 +18,10 @@ fi
 # Distro check
 if command -v pacman &>/dev/null; then
   echo "Detected Arch Linux"
-  bash /distro/arch/arch.sh
+  bash distro/arch/arch.sh
 elif command -v xbps-install &>/dev/null; then
   echo "Detected Void Linux"
-  bash /distro/arch/void.sh
+  bash distro/void/void.sh
 else
   echo "Error: This script supports Arch Linux and Void Linux only" >&2
   exit 1
