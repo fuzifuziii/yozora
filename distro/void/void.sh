@@ -30,6 +30,7 @@ i_src() {
   fi
 
   WORK_DIR="/tmp/void-packages-fuzi"
+
   if [[ -d "$WORK_DIR" ]]; then
     echo -e "${BLUE}Updating void-packages-fuzi repository...${NC}"
     git -C "$WORK_DIR" pull || return 1
@@ -48,22 +49,44 @@ i_src() {
     }
   fi
 
-  echo -e "\n${BLUE}Building packages: ${SRC_PKGS[*]}${NC}"
-  ./xbps-src pkg "${SRC_PKGS[@]}" || {
+  echo -e "\n${BLUE}Building packages one by one: ${SRC_PKGS[*]}${NC}"
+
+  local built=()
+  local failed=()
+
+  for pkg in "${SRC_PKGS[@]}"; do
+    echo -e "\n${BLUE}>>> Building $pkg ...${NC}"
+    if ./xbps-src pkg "$pkg"; then
+      built+=("$pkg")
+      echo -e "${GREEN}✓ $pkg built successfully${NC}"
+    else
+      failed+=("$pkg")
+      echo -e "${RED}✗ Failed to build $pkg${NC}"
+    fi
+  done
+
+  if [[ ${#built[@]} -eq 0 ]]; then
+    echo -e "${RED}No packages were built successfully${NC}"
     popd >/dev/null
     return 1
-  }
+  fi
 
-  echo -e "\n${BLUE}Installing packages...${NC}"
+  echo -e "\n${BLUE}Successfully built: ${built[*]}${NC}"
+  if [[ ${#failed[@]} -gt 0 ]]; then
+    echo -e "${YELLOW}Failed: ${failed[*]}${NC}"
+  fi
+
+  echo -e "\n${BLUE}Installing successfully built packages...${NC}"
   sudo xbps-install -y \
     --repository=hostdir/binpkgs \
     --repository=hostdir/binpkgs/dev \
-    -f "${SRC_PKGS[@]}" || {
+    -f "${built[@]}" || {
     popd >/dev/null
     return 1
   }
 
   popd >/dev/null
+  echo -e "${GREEN}✓ Custom packages installed${NC}"
 }
 
 e_xrepos() {
