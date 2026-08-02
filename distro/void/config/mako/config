@@ -1,0 +1,5 @@
+background-color=#1a1b26
+border-color=#33ccff
+include=~/.config/mako/theme/core.ini
+text-color=#c0caf5
+

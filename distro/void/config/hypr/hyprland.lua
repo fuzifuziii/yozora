@@ -1,0 +1,7 @@
+require("hyprland.general")
+require("hyprland.binds")
+require("hyprland.execs")
+require("hyprland.env")
+require("hyprland.rules")
+require("hyprland.animations")
+require("hyprland.misc")
