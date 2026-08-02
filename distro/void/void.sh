@@ -9,7 +9,7 @@ PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
-XBPS_PKGS=(iwd xtools-minimal sddm dolphin fastfetch btop fish hyprland hyprpicker kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
+XBPS_PKGS=(elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
