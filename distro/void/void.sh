@@ -24,33 +24,44 @@ e_repos() {
 i_src() {
   echo -e "\n${BLUE}=== Building and installing custom packages via xbps-src ===${NC}"
 
-  if ! command -v xi >/dev/null 2>&1; then
-    echo -e "${BLUE}Installing xtools (for xi)...${NC}"
-    sudo xbps-install -y xtools
+  if [[ ${#SRC_PKGS[@]} -eq 0 ]]; then
+    echo -e "${RED}SRC_PKGS is empty${NC}"
+    return 1
   fi
 
   WORK_DIR="/tmp/void-packages-fuzi"
-  if [ -d "$WORK_DIR" ]; then
+  if [[ -d "$WORK_DIR" ]]; then
     echo -e "${BLUE}Updating void-packages-fuzi repository...${NC}"
-    git -C "$WORK_DIR" pull
+    git -C "$WORK_DIR" pull || return 1
   else
     echo -e "${BLUE}Cloning void-packages-fuzi repository...${NC}"
-    git clone https://github.com/fuzifuziii/void-packages-fuzi.git "$WORK_DIR"
+    git clone https://github.com/fuzifuziii/void-packages-fuzi.git "$WORK_DIR" || return 1
   fi
 
-  pushd "$WORK_DIR" >/dev/null
+  pushd "$WORK_DIR" >/dev/null || return 1
 
-  echo -e "${BLUE}Bootstrapping xbps-src environment...${NC}"
-  ./xbps-src binary-bootstrap
+  if [[ ! -d masterdir ]]; then
+    echo -e "${BLUE}Bootstrapping xbps-src environment...${NC}"
+    ./xbps-src binary-bootstrap || {
+      popd >/dev/null
+      return 1
+    }
+  fi
 
-  echo -e "\n${BLUE}Building all custom packages at once...${NC}"
-  ./xbps-src pkg "${SRC_PKGS[@]}"
+  echo -e "\n${BLUE}Building packages: ${SRC_PKGS[*]}${NC}"
+  ./xbps-src pkg "${SRC_PKGS[@]}" || {
+    popd >/dev/null
+    return 1
+  }
 
   echo -e "\n${BLUE}Installing packages...${NC}"
-  for pkg in "${SRC_PKGS[@]}"; do
-    echo -e "${BLUE}Installing $pkg...${NC}"
-    xi "$pkg"
-  done
+  sudo xbps-install -y \
+    --repository=hostdir/binpkgs \
+    --repository=hostdir/binpkgs/dev \
+    -f "${SRC_PKGS[@]}" || {
+    popd >/dev/null
+    return 1
+  }
 
   popd >/dev/null
 }
