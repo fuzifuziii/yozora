@@ -49,7 +49,7 @@ i_src() {
   echo -e "\n${BLUE}Installing packages...${NC}"
   for pkg in "${SRC_PKGS[@]}"; do
     echo -e "${BLUE}Installing $pkg...${NC}"
-    sudo xi "$pkg"
+    XBPS_DISTDIR="$WORK_DIR" xi "$pkg"
   done
 
   popd >/dev/null
