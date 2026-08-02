@@ -9,8 +9,9 @@ PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
-XBPS_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
+XBPS_PKGS=(iwd xtools-minimal sddm dolphin fastfetch btop fish hyprland hyprpicker kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
+SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
 
 # Helper functions
@@ -18,6 +19,40 @@ e_repos() {
   echo -e "${BLUE}Enabling nonfree and multilib repositories...${NC}"
   sudo xbps-install void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree
   sudo xbps-install -S
+}
+
+i_src() {
+  echo -e "\n${BLUE}=== Building and installing custom packages via xbps-src ===${NC}"
+
+  if ! command -v xi >/dev/null 2>&1; then
+    echo -e "${BLUE}Installing xtools (for xi)...${NC}"
+    sudo xbps-install -y xtools
+  fi
+
+  WORK_DIR="/tmp/void-packages-fuzi"
+  if [ -d "$WORK_DIR" ]; then
+    echo -e "${BLUE}Updating void-packages-fuzi repository...${NC}"
+    git -C "$WORK_DIR" pull
+  else
+    echo -e "${BLUE}Cloning void-packages-fuzi repository...${NC}"
+    git clone https://github.com/fuzifuziii/void-packages-fuzi.git "$WORK_DIR"
+  fi
+
+  pushd "$WORK_DIR" >/dev/null
+
+  echo -e "${BLUE}Bootstrapping xbps-src environment...${NC}"
+  ./xbps-src binary-bootstrap
+
+  echo -e "\n${BLUE}Building all custom packages at once...${NC}"
+  ./xbps-src pkg "${CUSTOM_SRC_PKGS[@]}"
+
+  echo -e "\n${BLUE}Installing packages...${NC}"
+  for pkg in "${CUSTOM_SRC_PKGS[@]}"; do
+    echo -e "${BLUE}Installing $pkg...${NC}"
+    sudo xi "$pkg"
+  done
+
+  popd >/dev/null
 }
 
 e_xrepos() {
@@ -97,6 +132,11 @@ i_yozora() {
     echo -e "${BLUE}Installing dots...${NC}"
     sudo xbps-install -y "${XBPS_PKGS[@]}"
     sudo xbps-install -y "${XREPO_PKGS[@]}"
+    sudo ln -sf /etc/sv/iwd /var/service/
+  fi
+
+  if [ ${#SRC_PKGS[@]} -gt 0 ]; then
+    i_src
   fi
 
   if [ ${#FONTS_PKGS[@]} -gt 0 ]; then
@@ -161,8 +201,7 @@ i_pipewire() {
   echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
   sudo true
   sudo xbps-install -y "${PIPEWIRE_PKGS[@]}"
-
-  echo -e "${BLUE}Enabling PipeWire service/autostart...${NC}"
+  echo -e "${BLUE}Enabling Pipewire services...${NC}"
   mkdir -p /etc/pipewire/pipewire.conf.d
   sudo ln -s /usr/share/examples/wireplumber/10-wireplumber.conf /etc/pipewire/pipewire.conf.d/
   sudo ln -s /usr/share/examples/pipewire/20-pipewire-pulse.conf /etc/pipewire/pipewire.conf.d/
@@ -170,7 +209,7 @@ i_pipewire() {
 }
 
 i_cups() {
-  echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
+  echo -e "\n${BLUE}Preparing to install CUPS...${NC}"
   sudo true
   sudo xbps-install -y "${CUPS_PKGS[@]}"
   echo -e "${BLUE}Enabling CUPS service...${NC}"

@@ -178,13 +178,13 @@ i_pipewire() {
   e_multilib
   sudo true
   sudo pacman -S --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
-  echo -e "${BLUE}Enabling and starting Pipewire user services...${NC}"
+  echo -e "${BLUE}Enabling Pipewire services...${NC}"
   systemctl --user enable --now pipewire pipewire-pulse wireplumber
   echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
 }
 
 i_cups() {
-  echo -e "\n${BLUE}Preparing to install CUPS drivers...${NC}"
+  echo -e "\n${BLUE}Preparing to install CUPS...${NC}"
   sudo true
   sudo pacman -S --needed --noconfirm "${CUPS_PKGS[@]}"
   echo -e "${BLUE}Enabling and starting CUPS services...${NC}"
