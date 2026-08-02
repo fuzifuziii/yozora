@@ -49,7 +49,7 @@ i_src() {
   echo -e "\n${BLUE}Installing packages...${NC}"
   for pkg in "${SRC_PKGS[@]}"; do
     echo -e "${BLUE}Installing $pkg...${NC}"
-    XBPS_DISTDIR="$WORK_DIR" xi "$pkg"
+    sudo xbps-install -y --repository=hostdir/binpkgs -f "$pkg"
   done
 
   popd >/dev/null
