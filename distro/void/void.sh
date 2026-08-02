@@ -3,21 +3,30 @@
 set -e
 
 # Packages
-### BASE_PKGS=()
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
-XBPS_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
+XBPS_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
+XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
 
 # Helper functions
 e_repos() {
   echo -e "${BLUE}Enabling nonfree and multilib repositories...${NC}"
   sudo xbps-install void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree
-  sudo xbps-install -y
+  sudo xbps-install -S
+}
+
+e_xrepos() {
+  echo -e "${BLUE}Enabling hyprland and xlibre repositories...${NC}"
+  sudo mkdir -p /etc/xbps.d
+  sudo cp /usr/share/xbps.d/00-repository-main.conf /etc/xbps.d/
+  sudo sed -i "1i repository=https://mirror.black-hole.dev/$(xbps-uhelper arch)" /etc/xbps.d/00-repository-main.conf
+  printf "repository=https://github.com/xlibre-void/xlibre/releases/latest/download/" | sudo tee /etc/xbps.d/99-repository-xlibre.conf
+  sudo xbps-install -S
 }
 
 # Installation functions
@@ -78,22 +87,21 @@ i_yozora() {
 
   echo -e "\n${BLUE}[3/3] Installing packages...${NC}"
   e_repos
+  e_xrepos
   sudo true
 
   echo -e "${BLUE}Updating system...${NC}"
   sudo xbps-install -Syu
 
-  echo -e "${BLUE}Installing base packages...${NC}"
-  sudo xbps-install -Sy "${BASE_PKGS[@]}"
-
   if [ ${#XBPS_PKGS[@]} -gt 0 ]; then
     echo -e "${BLUE}Installing dots...${NC}"
-    sudo xbps-install -Sy "${XBPS_PKGS[@]}"
+    sudo xbps-install -y "${XBPS_PKGS[@]}"
+    sudo xbps-install -y "${XREPO_PKGS[@]}"
   fi
 
   if [ ${#FONTS_PKGS[@]} -gt 0 ]; then
     echo -e "${BLUE}Installing fonts...${NC}"
-    sudo xbps-install -Sy "${FONTS_PKGS[@]}"
+    sudo xbps-install -y "${FONTS_PKGS[@]}"
     i_fonts
   fi
 
@@ -128,10 +136,6 @@ i_yozora() {
   fi
 
   gsettings set org.gnome.desktop.wm.preferences button-layout ":"
-
-  if command -v elephant &>/dev/null; then
-    elephant service enable || true
-  fi
 
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
 }
