@@ -10,7 +10,7 @@ PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)
 OTHER_PKGS=(xone-dkms)
 
 # Packages for Yozora
-PACMAN_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace uwsm waybar slurp grim polkit-kde-agent systemsettings awww libnotify bluetui wiremix pamixer)
+PACMAN_PKGS=(sddm dolphin fastfetch btop fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty mako swayosd plasma-workspace waybar slurp grim polkit-kde-agent systemsettings awww libnotify bluetui wiremix pamixer)
 FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetbrains-mono-nerd)
 AUR_PKGS=(walker elephant-all hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
@@ -74,7 +74,7 @@ i_yozora() {
   mkdir -p "$HOME/.local/share"
 
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd uwsm walker waybar xdg-desktop-portal)
+  CONFIG_APPS=(btop elephant fastfetch fish hypr hyprland-preview-share-picker kitty mako swayosd walker waybar xdg-desktop-portal)
   LOCAL_SHARE_APPS=(fuzi)
 
   BACKUP_DIR="$HOME/yozora-backup"

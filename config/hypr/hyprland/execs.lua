@@ -1,10 +1,8 @@
 hl.on("hyprland.start", function()
-	hl.exec_cmd("pipewire")
 	hl.exec_cmd("dbus-update-activation-environment --systemd --all")
 	hl.exec_cmd("systemctl --user import-environment $(env | cut -d'=' -f 1)")
-	hl.exec_cmd("/usr/libexec/polkit-kde-authentication-agent-1")
+	hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
 
-	hl.exec_cmd("elephant")
 	hl.exec_cmd("mako")
 	hl.exec_cmd("waybar --config ~/.config/waybar/config --style ~/.config/waybar/theme/waybar.css")
 	hl.exec_cmd("awww-daemon")

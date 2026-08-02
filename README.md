@@ -1,6 +1,6 @@
 # Yozora
 
-**IMPORTANT:** This installer and setup currently support **Arch Linux and Arch-based distributions only**. Running it on other distributions is not supported.
+**IMPORTANT:** This installer and setup currently support **Arch Linux and Void Linux distributions only**. Running it on other distributions is not supported.
 
 ## Included Software
 
@@ -14,7 +14,6 @@
 | Launcher        | Walker    |
 | System Info     | Fastfetch |
 | Monitor         | Btop      |
-| Session Manager | UWSM      |
 
 ## Installation
 
