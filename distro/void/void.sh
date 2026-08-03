@@ -9,6 +9,7 @@ PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
+BASE_PKGS=(ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XBPS_PKGS=(elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
@@ -165,6 +166,9 @@ i_yozora() {
   echo -e "${BLUE}Updating system...${NC}"
   sudo xbps-install -Syu
 
+  echo -e "${BLUE}Installing base packages...${NC}"
+  sudo xbps-install -y "${BASE_PKGS[@]}"
+
   if [ ${#XBPS_PKGS[@]} -gt 0 ]; then
     echo -e "${BLUE}Installing dots...${NC}"
     sudo xbps-install -y "${XBPS_PKGS[@]}"
@@ -218,11 +222,20 @@ i_yozora() {
 }
 
 i_fonts() {
-  echo -e "\n${BLUE}Preparing to install fonts...${NC}"
-  curl -fLo /tmp/JetBrainsMono.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-  sudo true
-  sudo unzip -o /tmp/JetBrainsMono.zip -d /usr/share/fonts/JetBrainsMonoNerd/
-  rm -f /tmp/JetBrainsMono.zip
+  echo -e "\n${BLUE}Preparing to install JetBrainsMono Nerd...${NC}"
+
+  local font_dir="/usr/share/fonts/JetBrainsMonoNerd"
+  local zip="/tmp/JetBrainsMono.zip"
+
+  if fc-list | grep -qi "JetBrainsMonoNerdFont"; then
+    echo -e "${YELLOW}Already installed. Skipping.${NC}"
+    return 0
+  fi
+
+  curl -fLo "$zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+  sudo mkdir -p "$font_dir"
+  sudo unzip -o "$zip" -d "$font_dir"
+  rm -f "$zip"
   sudo fc-cache -fv
 }
 
@@ -239,7 +252,7 @@ i_pipewire() {
   sudo true
   sudo xbps-install -y "${PIPEWIRE_PKGS[@]}"
   echo -e "${BLUE}Enabling Pipewire services...${NC}"
-  mkdir -p /etc/pipewire/pipewire.conf.d
+  sudo mkdir -p /etc/pipewire/pipewire.conf.d
   sudo ln -s /usr/share/examples/wireplumber/10-wireplumber.conf /etc/pipewire/pipewire.conf.d/
   sudo ln -s /usr/share/examples/pipewire/20-pipewire-pulse.conf /etc/pipewire/pipewire.conf.d/
   echo -e "${GREEN}✓ Pipewire installed successfully!${NC}"
