@@ -3,7 +3,7 @@
 set -e
 
 # Packages
-BASE_PKGS=(wl-clipborad wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
+BASE_PKGS=(wl-clipborad wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
