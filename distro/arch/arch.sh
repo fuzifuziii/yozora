@@ -15,17 +15,10 @@ FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetb
 AUR_PKGS=(walker elephant-all hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
 # Helper functions
-e_multilib() {
+e_repos() {
   if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
     echo -e "${BLUE}Enabling multilib repository...${NC}"
     sudo sed -i '/^#\[multilib\]/,/^#Include/s/^#//' /etc/pacman.conf
-  fi
-}
-
-e_candy() {
-  if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
-    echo -e "${BLUE}Enabling ILoveCandy progress bar...${NC}"
-    sudo sed -i '/^# Misc options/a ILoveCandy' /etc/pacman.conf
   fi
 }
 
@@ -44,6 +37,14 @@ i_yay() {
       exit 1
     fi
     echo -e "${GREEN}✓ yay installed successfully!${NC}"
+  fi
+}
+
+# Optional functions
+e_candy() {
+  if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
+    echo -e "${BLUE}Enabling ILoveCandy progress bar...${NC}"
+    sudo sed -i '/^# Misc options/a ILoveCandy' /etc/pacman.conf
   fi
 }
 
@@ -104,7 +105,7 @@ i_yozora() {
   fi
 
   echo -e "\n${BLUE}[3/3] Installing packages...${NC}"
-  e_multilib
+  e_repos
   e_candy
   sudo true
 
@@ -167,7 +168,7 @@ i_yozora() {
 
 i_nvidia() {
   echo -e "\n${BLUE}Preparing to install NVIDIA drivers...${NC}"
-  e_multilib
+  e_repos
   sudo true
   sudo pacman -S --needed --noconfirm "${NVIDIA_PKGS[@]}"
   echo -e "${GREEN}✓ NVIDIA drivers installed successfully!${NC}"
@@ -175,7 +176,7 @@ i_nvidia() {
 
 i_pipewire() {
   echo -e "\n${BLUE}Preparing to install Pipewire...${NC}"
-  e_multilib
+  e_repos
   sudo true
   sudo pacman -S --needed --noconfirm "${PIPEWIRE_PKGS[@]}"
   echo -e "${BLUE}Enabling Pipewire services...${NC}"

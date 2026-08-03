@@ -3,22 +3,34 @@
 set -e
 
 # Packages
+BASE_PKGS=(wl-clipborad wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
-BASE_PKGS=(ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XBPS_PKGS=(elogind iwd xtools-minimal sddm dolphin fastfetch btop fish-shell hyprland hyprpicker kitty mako SwayOSD plasma-workspace Waybar slurp grim polkit-kde-agent systemsettings libnotify bluetui pamixer)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
-SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
+SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
 
 # Helper functions
 e_repos() {
   echo -e "${BLUE}Enabling nonfree and multilib repositories...${NC}"
   sudo xbps-install void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree
+  sudo xbps-install -S
+}
+
+e_xrepos() {
+  echo -e "${BLUE}Enabling hyprland and xlibre repositories...${NC}"
+  sudo mkdir -p /etc/xbps.d
+  MIRROR_LINE="repository=https://mirror.black-hole.dev/$(xbps-uhelper arch)"
+  if [ ! -f /etc/xbps.d/00-repository-main.conf ] || ! grep -qF "$MIRROR_LINE" /etc/xbps.d/00-repository-main.conf; then
+    sudo cp /usr/share/xbps.d/00-repository-main.conf /etc/xbps.d/
+    sudo sed -i "1i $MIRROR_LINE" /etc/xbps.d/00-repository-main.conf
+  fi
+  printf "repository=https://github.com/xlibre-void/xlibre/releases/latest/download/" | sudo tee /etc/xbps.d/99-repository-xlibre.conf >/dev/null
   sudo xbps-install -S
 }
 
@@ -90,16 +102,31 @@ i_src() {
   echo -e "${GREEN}✓ Custom packages installed${NC}"
 }
 
-e_xrepos() {
-  echo -e "${BLUE}Enabling hyprland and xlibre repositories...${NC}"
-  sudo mkdir -p /etc/xbps.d
-  MIRROR_LINE="repository=https://mirror.black-hole.dev/$(xbps-uhelper arch)"
-  if [ ! -f /etc/xbps.d/00-repository-main.conf ] || ! grep -qF "$MIRROR_LINE" /etc/xbps.d/00-repository-main.conf; then
-    sudo cp /usr/share/xbps.d/00-repository-main.conf /etc/xbps.d/
-    sudo sed -i "1i $MIRROR_LINE" /etc/xbps.d/00-repository-main.conf
+i_dbus() {
+  local orig="/usr/share/wayland-sessions/hyprland.desktop"
+  local target="/usr/share/wayland-sessions/hyprland-dbus.desktop"
+
+  sudo cp "$orig" "$target"
+  sudo sed -i 's|^Name=.*|Name=Hyprland (D-Bus)|' "$target"
+  sudo sed -i 's|^Exec=.*|Exec=dbus-run-session /usr/bin/start-hyprland|' "$target"
+}
+
+i_fonts() {
+  echo -e "\n${BLUE}Preparing to install JetBrainsMono Nerd...${NC}"
+
+  local font_dir="/usr/share/fonts/JetBrainsMonoNerd"
+  local zip="/tmp/JetBrainsMono.zip"
+
+  if fc-list | grep -qi "JetBrainsMonoNerdFont"; then
+    echo -e "${YELLOW}Already installed. Skipping.${NC}"
+    return 0
   fi
-  printf "repository=https://github.com/xlibre-void/xlibre/releases/latest/download/" | sudo tee /etc/xbps.d/99-repository-xlibre.conf >/dev/null
-  sudo xbps-install -S
+
+  curl -fLo "$zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+  sudo mkdir -p "$font_dir"
+  sudo unzip -o "$zip" -d "$font_dir"
+  rm -f "$zip"
+  sudo fc-cache -fv
 }
 
 # Installation functions
@@ -154,7 +181,7 @@ i_yozora() {
 
   mkdir -p "$HOME/.local/share/color-schemes"
   if [ -f "$SCRIPT_DIR/TokyoNight.colors" ]; then
-    cp "$SCRIPT_DIR/TokyoNight.colors" "$HOME/.local/share/color-schemes/TokyoNight.colors"
+    cp "$SCRIPT_DIR/TokyoNight.colors" "$HOME/.local/share/color-schemes/"
     echo -e "${GREEN}✓ Color theme copied successfully${NC}"
   fi
 
@@ -213,30 +240,14 @@ i_yozora() {
   echo -e "\n${BLUE}Enabling SDDM display manager...${NC}"
   if [ -d /etc/sv/sddm ]; then
     sudo ln -sf /etc/sv/sddm /var/service/
+    sudo ln -sf /etc/sv/dbus /var/service/
     echo -e "${GREEN}✓ SDDM service enabled${NC}"
   fi
 
+  i_dbus
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
-}
-
-i_fonts() {
-  echo -e "\n${BLUE}Preparing to install JetBrainsMono Nerd...${NC}"
-
-  local font_dir="/usr/share/fonts/JetBrainsMonoNerd"
-  local zip="/tmp/JetBrainsMono.zip"
-
-  if fc-list | grep -qi "JetBrainsMonoNerdFont"; then
-    echo -e "${YELLOW}Already installed. Skipping.${NC}"
-    return 0
-  fi
-
-  curl -fLo "$zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-  sudo mkdir -p "$font_dir"
-  sudo unzip -o "$zip" -d "$font_dir"
-  rm -f "$zip"
-  sudo fc-cache -fv
 }
 
 i_nvidia() {
