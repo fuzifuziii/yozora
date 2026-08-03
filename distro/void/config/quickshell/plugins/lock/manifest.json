@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "fuzi.lock",
+  "name": "Lock Screen",
+  "version": "1.0.0",
+  "author": "Fuzi",
+  "description": "Quickshell session lock with separate password and fingerprint PAM flows.",
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}
