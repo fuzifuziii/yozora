@@ -107,6 +107,7 @@ e_nm() {
   sudo rm -rf /etc/sv/dhcpcd
   sudo rm -rf /etc/sv/iwd
   sudo ln -s /etc/sv/NetworkManager/ /var/service/
+  sudo xpbs-remove -y dhcpd iwd
 }
 
 i_dbus() {
@@ -252,6 +253,8 @@ i_yozora() {
   fi
 
   i_dbus
+  e_nm
+
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
   mkdir -p ~/.icons && sudo ln -sf /usr/share/icons/Adwaita ~/.icons/default
   sudo ln -sf /etc/sv/power-profiles-daemon /var/service/
