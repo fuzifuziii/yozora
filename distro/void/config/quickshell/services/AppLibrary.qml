@@ -59,12 +59,12 @@ Item {
     if (value.length === 0) return Quickshell.iconPath("application-x-executable", true)
     if (value.indexOf("file://") === 0 || value.indexOf("image://") === 0) return value
     if (value.charAt(0) === "/") return Util.fileUrl(value)
-    // Prefer the context-limited app/device index. An unconstrained themed
-    // lookup can resolve an app name such as "zoom" to an action icon instead.
-    var found = root.iconIndex[value]
-    if (found) return Util.fileUrl(found)
     var themed = Quickshell.iconPath(value, true)
     if (themed.length > 0) return themed
+    // The theme lookup is authoritative. Use the filesystem index only when
+    // Qt cannot resolve an icon installed after the theme cache was built.
+    var found = root.iconIndex[value]
+    if (found) return Util.fileUrl(found)
     return Quickshell.iconPath("application-x-executable", true)
   }
 
@@ -148,7 +148,7 @@ Item {
 
   function hiddenEntryScanCommand() {
     var desktop = [Quickshell.env("XDG_CURRENT_DESKTOP"), Quickshell.env("XDG_SESSION_DESKTOP"), Quickshell.env("DESKTOP_SESSION")].filter(function(v) { return String(v || "").length > 0 }).join(":")
-    var script = root.fuziPath + "/shell/services/hidden-entries.sh"
+    var script = root.fuziPath + "/services/hidden-entries.sh"
     return Util.shellQuote(script) + " " + Util.shellQuote(desktop)
   }
 

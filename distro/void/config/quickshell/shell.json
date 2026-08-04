@@ -10,18 +10,41 @@
     "centerAnchor": "fuzi.clock",
     "layout": {
       "left": [
-        { "id": "fuzi.workspaces" }
+        {
+          "id": "fuzi.workspaces"
+        }
       ],
       "center": [
-        { "id": "fuzi.clock", "format": "dddd HH:mm" }
+        {
+          "id": "fuzi.weather"
+        },
+        {
+          "id": "fuzi.clock",
+          "format": "dddd HH:mm"
+        }
       ],
       "right": [
-        { "id": "fuzi.tray" },
-        { "id": "fuzi.keyboard-layout" },
-        { "id": "fuzi.bluetooth" },
-        { "id": "fuzi.network" },
-        { "id": "fuzi.audio" },
-        { "id": "fuzi.power" }
+        {
+          "id": "fuzi.keyboard-layout"
+        },
+        {
+          "id": "fuzi.bluetooth"
+        },
+        {
+          "id": "fuzi.network"
+        },
+        {
+          "id": "fuzi.tray"
+        },
+        {
+          "id": "fuzi.audio"
+        },
+        {
+          "id": "fuzi.system-monitor"
+        },
+        {
+          "id": "fuzi.power"
+        }
       ]
     }
   },

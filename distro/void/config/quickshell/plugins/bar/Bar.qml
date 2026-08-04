@@ -887,7 +887,7 @@ Item {
   Process {
     id: barHiddenProbe
     running: true
-    command: ["bash", "-c", "[[ -f $HOME/.local/state/fuzi/toggles/bar-off ]] && echo yes || echo no"]
+    command: ["bash", "-c", "[[ -f $HOME/.local/share/fuzi/toggles/bar-off ]] && echo yes || echo no"]
     stdout: SplitParser { onRead: function(line) { root.barHidden = String(line).trim() === "yes" } }
   }
   FileView {
@@ -1084,7 +1084,6 @@ Item {
     visible: active && sourceItem !== null
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "fuzi-bar-drag-ghost"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
@@ -1565,100 +1564,6 @@ Item {
 
       Behavior on opacity {
         NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
-      }
-    }
-
-    MouseArea {
-      id: modulePointer
-
-      property bool dragging: false
-      property bool suppressClick: false
-      property real pressedX: 0
-      property real pressedY: 0
-      readonly property bool canReorder: root.shell && typeof root.shell.mutateShellConfig === "function"
-      readonly property real dragThreshold: Style.space(4)
-
-      anchors.fill: parent
-      acceptedButtons: Qt.LeftButton
-      enabled: slot.visible && slot.width > 0 && slot.height > 0
-      propagateComposedEvents: true
-      cursorShape: root.moduleClickTargetAt(slot, mouseX, mouseY) ? Qt.PointingHandCursor : Qt.ArrowCursor
-      // Do not assign drag.target here: ModuleSlot is owned by Row/Column
-      // positioners, and mutating slot.x/slot.y can leave stale offsets that
-      // make neighboring modules overlap after a small aborted drag.
-
-      onPressed: function(mouse) {
-        dragging = false
-        suppressClick = false
-        pressedX = mouse.x
-        pressedY = mouse.y
-        root.clearBarDrag()
-      }
-
-      onPositionChanged: function(mouse) {
-        if (!canReorder || !(mouse.buttons & Qt.LeftButton)) return
-
-        var distance = Math.abs(mouse.x - pressedX) + Math.abs(mouse.y - pressedY)
-        if (distance >= dragThreshold) {
-          if (!dragging) {
-            root.barDragWindow = root.targetWindow(slot.activeItem) || root.targetWindow(slot)
-            root.barDragScreen = root.barDragWindow ? root.barDragWindow.screen : null
-            root.barDragOffsetX = pressedX
-            root.barDragOffsetY = pressedY
-            root.captureBarDragGhost(slot)
-            root.barDragSource = slot
-          }
-          dragging = true
-          root.hideTooltip(slot.activeItem)
-        }
-
-        if (dragging) {
-          var scenePoint = slot.mapToItem(null, mouse.x, mouse.y)
-          var screenPoint = root.barDragScreenPoint(scenePoint)
-          root.barDragSceneX = scenePoint.x
-          root.barDragSceneY = scenePoint.y
-          root.barDragScreenX = screenPoint.x
-          root.barDragScreenY = screenPoint.y
-
-          var drop = root.moduleDropAtScene(scenePoint, slot)
-          root.barDragTarget = drop ? drop.slot : null
-          root.barDragAfter = drop ? drop.after : false
-          root.barDragTargetGeometry = drop ? root.dropMarkerRect(drop.slot, drop.after) : null
-        }
-      }
-
-      onReleased: function(mouse) {
-        var wasDragging = dragging
-        var targetSlot = root.barDragTarget
-        var afterTarget = root.barDragAfter
-
-        if (wasDragging) suppressClick = true
-
-        dragging = false
-        root.clearBarDrag()
-
-        if (wasDragging && targetSlot) {
-          root.dropBarModuleAtTarget(slot, targetSlot, afterTarget)
-          mouse.accepted = true
-        } else if (!wasDragging) {
-          mouse.accepted = false
-        }
-      }
-
-      onCanceled: {
-        dragging = false
-        suppressClick = false
-        root.clearBarDrag()
-      }
-
-      onClicked: function(mouse) {
-        if (suppressClick) {
-          suppressClick = false
-          mouse.accepted = true
-          return
-        }
-
-        if (!root.pressModuleClickTarget(slot, mouse.button, mouse.x, mouse.y)) mouse.accepted = false
       }
     }
 

@@ -19,6 +19,7 @@ Item {
   property bool cursorActive: false
   property var emojis: []
   property var filteredEmojis: []
+  readonly property string emojiDataPath: String(Qt.resolvedUrl("emojis.json")).replace(/^file:\/\//, "")
 
   // Shares the [menu] surface tokens — themes that style the menu also
   // style emojis. Selected-cell colors composed in the
@@ -148,13 +149,13 @@ Item {
   function applySelected(emoji) {
     if (!emoji) return
     root.dismiss()
-    Quickshell.execDetached([root.fuziPath + "/bin/fuzi-menu-emoji-insert", emoji])
+    Quickshell.execDetached([root.fuziPath + "/bin/fuzi-menu-emoji-copy", emoji])
   }
 
   ListModel { id: displayModel }
 
   FileView {
-    path: root.fuziPath + "/shell/plugins/emojis/emojis.json"
+    path: root.emojiDataPath
     onLoaded: root.loadEmojis(text())
   }
   PanelWindow {

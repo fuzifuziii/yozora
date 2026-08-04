@@ -1,5 +1,5 @@
 hl.layer_rule({
-	match = { namespace = "notifications" },
+	match = { namespace = "fuzi-notifications" },
 	no_screen_share = true,
 })
 

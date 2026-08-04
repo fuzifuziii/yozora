@@ -10,8 +10,8 @@ Item {
   id: root
 
   readonly property string home: Quickshell.env("HOME")
-  readonly property string stateHome: home + "/.local/state"
-  readonly property string currentBackgroundLink: stateHome + "/fuzi/current/background"
+  readonly property string stateHome: home + "/.local/share"
+  readonly property string currentBackgroundLink: stateHome + "/fuzi/background"
 
   property string currentBackground: ""
   property string displayedBackground: ""
@@ -110,12 +110,6 @@ Item {
   Process {
     id: bgSwitchProc
     command: ["bash", "-c", "background=$(fuzi-theme-bg-switcher); [[ -n $background ]] && fuzi-theme-bg-set \"$background\""]
-    onExited: root.refreshBackground()
-  }
-
-  Process {
-    id: themeSwitchProc
-    command: ["bash", "-c", "theme=$(fuzi-theme-switcher); [[ -n $theme ]] && fuzi-theme-set \"$theme\" >/dev/null 2>&1 &"]
     onExited: root.refreshBackground()
   }
 

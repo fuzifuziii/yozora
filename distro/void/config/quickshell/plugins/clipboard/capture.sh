@@ -6,7 +6,7 @@
 
 set -o pipefail
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/fuzi"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/share/fuzi}/clipboard"
 IMAGE_DIR="$STATE_DIR/clipboard-images"
 mkdir -p "$IMAGE_DIR"
 
@@ -47,8 +47,14 @@ emit_text() {
 }
 
 case "${1:-}" in
-text) emit_text; exit 0 ;;
-image/*) emit_image "$1"; exit 0 ;;
+text)
+  emit_text
+  exit 0
+  ;;
+image/*)
+  emit_image "$1"
+  exit 0
+  ;;
 esac
 
 for mime in image/png image/jpeg image/webp image/gif image/bmp image/tiff; do

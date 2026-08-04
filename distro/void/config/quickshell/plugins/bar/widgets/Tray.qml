@@ -443,7 +443,7 @@ BarWidget {
     bar: root.bar
     open: root.trayMenuOpen
     padding: Style.space(8)
-    borderColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.45)
+    borderColor: Color.popups.border
     contentWidth: trayMenuPopup.fittedContentWidth(Style.space(232))
     contentHeight: trayMenuPopup.fittedContentHeight(trayMenuColumn.implicitHeight, Style.space(420))
 

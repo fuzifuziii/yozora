@@ -12,7 +12,7 @@ Item {
 
   // Injected by fuzi-shell; defaults to the session FUZI_PATH.
   property string fuziPath: Quickshell.env("FUZI_PATH")
-  property string stateHome: Quickshell.env("HOME") + "/.local/state"
+  property string stateHome: Quickshell.env("HOME") + "/.local/share"
   property string imageDirs: Quickshell.env("FUZI_IMAGE_SELECTOR_DIRS") || Quickshell.env("FUZI_IMAGE_SELECTOR_DIR") || Quickshell.env("FUZI_STOCK_BACKGROUNDS_DIR") || (stateHome + "/fuzi/current/theme/backgrounds")
   property string imageRows: ""
   property string loadedImageRows: ""
@@ -49,7 +49,7 @@ Item {
   onOpenedChanged: if (!opened) layoutSettled = false
 
   function scriptPath(name) {
-    return fuziPath + "/shell/plugins/image-picker/" + name
+    return fuziPath + "/plugins/image-picker/" + name
   }
 
   function focusPicker() {

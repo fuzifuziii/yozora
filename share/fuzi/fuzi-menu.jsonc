@@ -1,0 +1,13 @@
+{
+  // Root Menu
+  "wallpaper": {"icon":"","label":"Wallpaper","aliases":["background"],"action":"background=$(fuzi-theme-bg-switcher); [[ -n $background ]] && fuzi-theme-bg-set \"$background\""},
+  "toggle": {"icon":"","label":"Toggle","aliases":["toggles"]},
+  "screen": {"icon":"󰹑","label":"Screen"},
+
+  // Toggle
+  "toggle.notifications": {"icon":"󰂛","label":"Notifications","action":"fuzi-toggle-notification-silencing"},
+
+  // Screen
+  "screen.notifications": {"icon":"󰂛","label":"Notifications","action":"fuzi-cmd-screen-notifications"},
+  "screen.telegram": {"icon":"","label":"Telegram","action":"fuzi-cmd-screen-telegram"}
+}

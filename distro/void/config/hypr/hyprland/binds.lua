@@ -48,44 +48,21 @@ hl.bind("SUPER + SHIFT + LEFT", hl.dsp.window.swap({ direction = "l" }))
 hl.bind("SUPER + SHIFT + RIGHT", hl.dsp.window.swap({ direction = "r" }))
 hl.bind("SUPER + SHIFT + UP", hl.dsp.window.swap({ direction = "u" }))
 hl.bind("SUPER + SHIFT + DOWN", hl.dsp.window.swap({ direction = "d" }))
-hl.bind("SUPER + Super_L", hl.dsp.exec_cmd("fuzi-launch-walker"), { description = "Apps" })
-hl.bind("SUPER + D", hl.dsp.exec_cmd("fuzi-menu"), { description = "Menu" })
+hl.bind("SUPER + Super_L", hl.dsp.exec_cmd("fuzi-menu-app"), { description = "Apps" })
+hl.bind("SUPER + D", hl.dsp.exec_cmd("fuzi-menu toggle"), { description = "Menu" })
 hl.bind("SUPER + K", hl.dsp.exec_cmd("fuzi-menu-binds"), { description = "Binds" })
-hl.bind("SUPER + Period", hl.dsp.exec_cmd("fuzi-launch-walker -m symbols"), { description = "Symbols" })
-hl.bind("SUPER + V", hl.dsp.exec_cmd("fuzi-launch-walker -m clipboard"), { description = "Clipboard" })
+hl.bind("SUPER + Period", hl.dsp.exec_cmd("fuzi-shell shell toggle fuzi.emojis"), { description = "Symbols" })
+hl.bind("SUPER + V", hl.dsp.exec_cmd("fuzi-shell shell toggle fuzi.clipboard"), { description = "Clipboard" })
 hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("fuzi-cmd-screenshot smart clipboard"), { description = "Screenshot" })
 hl.bind("SUPER + SHIFT + Q", hl.dsp.exec_cmd("pkill hyprpicker || hyprpicker -a"), { description = "Hyprpicker" })
 
-hl.bind(
-	"XF86AudioRaiseVolume",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --output-volume raise"),
-	{ locked = true, repeating = true }
-)
-hl.bind(
-	"XF86AudioLowerVolume",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --output-volume lower"),
-	{ locked = true, repeating = true }
-)
-hl.bind(
-	"XF86AudioMute",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --output-volume mute-toggle"),
-	{ locked = true, repeating = true }
-)
-hl.bind(
-	"XF86AudioMicMute",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --input-volume mute-toggle"),
-	{ locked = true, repeating = true }
-)
-hl.bind(
-	"XF86MonBrightnessUp",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --brightness raise"),
-	{ locked = true, repeating = true }
-)
-hl.bind(
-	"XF86MonBrightnessDown",
-	hl.dsp.exec_cmd("swayosd-client --monitor eDP-1 --brightness lower"),
-	{ locked = true, repeating = true }
-)
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("fuzi-audio-output-volume +5"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("fuzi-audio-output-volume -5"), { locked = true, repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("fuzi-audio-output-volume mute-toglle"), { locked = true, repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("fuzi-audio-input-mute"), { locked = true, repeating = true })
+
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("fuzi-brightness-display +5%"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("fuzi-brightness-display 5%-"), { locked = true, repeating = true })
 
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag())
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize())

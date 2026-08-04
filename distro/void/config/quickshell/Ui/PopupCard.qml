@@ -13,6 +13,7 @@ PopupWindow {
   property int padding: Style.spacing.popupPadding
   property int contentWidth: Style.space(280)
   property int contentHeight: Style.space(200)
+  property real cardRadius: Style.cornerRadius
   property color borderColor: Color.popups.border
   property var borderSpec: Border.localOrSurfaceSpec("popups", "border", borderColor, Color.popups.border, Math.max(1, Style.space(2)))
   property bool open: false
@@ -153,7 +154,7 @@ PopupWindow {
     color: Color.popups.background
     borderSpec: root.borderSpec
     padding: root.padding
-    radius: Style.cornerRadius
+     radius: root.cardRadius
     opacity: root.open ? 1.0 : 0
 
     Behavior on opacity {

@@ -73,6 +73,10 @@ Panel {
   // contract instantiates it bare).
   readonly property color contentForeground: bar ? bar.foreground : Color.foreground
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var mediaService: bar && bar.shell ? bar.shell.firstPartyServiceFor("fuzi.media") : null
+  readonly property var mediaPlayer: mediaService ? mediaService.activePlayer : null
+  readonly property var mediaPlayers: mediaService ? mediaService.sourcePlayers : []
+  readonly property bool hasMedia: mediaPlayer !== null && (mediaPlayer.trackTitle || mediaPlayer.trackArtist)
 
   readonly property int cellWidth: Style.space(52)
   readonly property int cellHeight: Style.space(34)
@@ -739,6 +743,148 @@ Panel {
                 foreground: root.contentForeground
                 fontFamily: root.contentFontFamily
                 onClicked: root.moveMonth(1)
+              }
+            }
+          }
+
+          Rectangle {
+            width: parent.width
+            height: Style.spacing.hairline
+            color: root.contentForeground
+            opacity: 0.12
+          }
+
+          Column {
+            width: parent.width
+            spacing: Style.space(8)
+
+            Item {
+              width: parent.width
+              height: Math.max(mediaLabel.implicitHeight, sourceControls.implicitHeight)
+
+              Text {
+                id: mediaLabel
+                anchors.left: parent.left
+                text: "MEDIA"
+                color: Qt.darker(root.contentForeground, 1.4)
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.caption
+                font.bold: true
+                font.letterSpacing: 1.2
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Row {
+                id: sourceControls
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.mediaPlayers.length > 1
+                spacing: Style.space(2)
+
+                PanelActionButton {
+                  iconText: "󰅁"
+                  tooltipText: "Previous media source"
+                  foreground: root.contentForeground
+                  fontFamily: root.contentFontFamily
+                  onClicked: if (root.mediaService) root.mediaService.switchSource(-1, false, true)
+                }
+
+                PanelActionButton {
+                  iconText: "󰅂"
+                  tooltipText: "Next media source"
+                  foreground: root.contentForeground
+                  fontFamily: root.contentFontFamily
+                  onClicked: if (root.mediaService) root.mediaService.switchSource(1, false, true)
+                }
+              }
+            }
+
+            Row {
+              width: parent.width
+              spacing: Style.space(10)
+
+              BorderSurface {
+                width: Style.space(52)
+                height: Style.space(52)
+                radius: 0
+                color: Style.normalFillFor(root.contentForeground, Color.accent)
+                borderSpec: Border.flat(Util.alpha(root.contentForeground, 0.28), 1)
+
+                Image {
+                  anchors.fill: parent
+                  anchors.margins: Style.space(2)
+                  source: root.mediaPlayer && root.mediaPlayer.trackArtUrl ? root.mediaPlayer.trackArtUrl : ""
+                  fillMode: Image.PreserveAspectCrop
+                  asynchronous: true
+                  visible: source !== ""
+                }
+
+                Text {
+                  anchors.centerIn: parent
+                  text: "󰝚"
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.display
+                  visible: !root.mediaPlayer || !root.mediaPlayer.trackArtUrl
+                }
+              }
+
+              Column {
+                width: parent.width - Style.space(62)
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Style.space(3)
+
+                Text {
+                  width: parent.width
+                  text: root.hasMedia ? (root.mediaPlayer.trackTitle || "Untitled") : "Nothing playing"
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.body
+                  font.bold: true
+                  elide: Text.ElideRight
+                }
+
+                Text {
+                  width: parent.width
+                  text: root.hasMedia ? (root.mediaPlayer.trackArtist || "") : ""
+                  color: Qt.darker(root.contentForeground, 1.4)
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  elide: Text.ElideRight
+                  visible: text !== ""
+                }
+              }
+            }
+
+            Row {
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: Style.space(6)
+
+              PanelActionButton {
+                iconText: "󰒮"
+                tooltipText: "Previous track"
+                foreground: root.contentForeground
+                fontFamily: root.contentFontFamily
+                enabled: root.hasMedia
+                onClicked: if (root.mediaService) root.mediaService.runAction("previous", true)
+              }
+
+              PanelActionButton {
+                iconText: root.mediaPlayer && root.mediaPlayer.isPlaying ? "󰏤" : "󰐊"
+                tooltipText: root.mediaPlayer && root.mediaPlayer.isPlaying ? "Pause" : "Play"
+                foreground: root.contentForeground
+                fontFamily: root.contentFontFamily
+                enabled: root.hasMedia
+                onClicked: if (root.mediaService) root.mediaService.runAction("playPause", true)
+              }
+
+              PanelActionButton {
+                iconText: "󰒭"
+                tooltipText: "Next track"
+                foreground: root.contentForeground
+                fontFamily: root.contentFontFamily
+                enabled: root.hasMedia
+                onClicked: if (root.mediaService) root.mediaService.runAction("next", true)
               }
             }
           }

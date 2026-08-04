@@ -17,8 +17,8 @@ Item {
   property bool clearConfirmOpen: false
   property var history: []
 
-  property string historyPath: Quickshell.env("HOME") + "/.local/state/fuzi/clipboard-history.json"
-  property string captureScript: root.fuziPath + "/shell/plugins/clipboard/capture.sh"
+  property string historyPath: Quickshell.env("HOME") + "/.local/share/fuzi/clipboard/clipboard-history.json"
+  readonly property string captureScript: String(Qt.resolvedUrl("capture.sh")).replace(/^file:\/\//, "")
   // Shares the [menu] surface tokens — themes that style the menu also
   // style the clipboard. Selected-row colors composed in the
   // singleton so consumers drop them straight into Rectangle bindings.
@@ -213,22 +213,24 @@ Item {
   }
 
   function applySelected(row) {
-    if (!row) return
-    root.opened = false
-    if (row.entryType === "image") {
-      Quickshell.execDetached([root.fuziPath + "/bin/fuzi-clipboard-paste-file", row.mime, row.path])
-    } else if (row.fullText) {
-      Quickshell.execDetached([root.fuziPath + "/bin/fuzi-clipboard-paste-text", "--shift-insert", "--history-index", String(row.historyIndex)])
-    }
+    root.copySelected(row)
   }
 
   function copySelected(row) {
     if (!row) return
     root.opened = false
     if (row.entryType === "image") {
-      Quickshell.execDetached([root.fuziPath + "/bin/fuzi-clipboard-paste-file", "--copy-only", row.mime, row.path])
+      Quickshell.execDetached([
+        "bash", "-lc",
+        "wl-copy --type " + Util.shellQuote(row.mime || "image/png")
+          + " --foreground < " + Util.shellQuote(row.path)
+      ])
     } else if (row.fullText) {
-      Quickshell.execDetached([root.fuziPath + "/bin/fuzi-clipboard-paste-text", "--copy-only", "--history-index", String(row.historyIndex)])
+      Quickshell.execDetached([
+        "bash", "-lc",
+        "printf '%s' " + Util.shellQuote(row.fullText)
+          + " | wl-copy --type text/plain --foreground"
+      ])
     }
   }
 
@@ -523,7 +525,7 @@ Item {
                     onClicked: {
                       root.cursorActive = true
                       root.selectedIndex = row.index
-                      root.activateIndex(row.index)
+                      root.copyIndex(row.index)
                     }
                   }
                 }

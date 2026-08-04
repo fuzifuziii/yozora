@@ -22,7 +22,7 @@ Item {
   // History + DND live under XDG_STATE_HOME: they're persistent user state
   // (history of received notifications, last-set DND preference), not
   // regeneratable cache that a `rm -rf ~/.cache` should wipe.
-  readonly property string stateDir: home + "/.local/state/fuzi/"
+  readonly property string stateDir: home + "/.local/share/fuzi/"
   readonly property string historyPath: stateDir + "notifications.json"
   // Thumbnails copied from /tmp screenshots are genuinely disposable — if
   // they vanish the row just renders without an image — so they stay in
@@ -435,6 +435,63 @@ Item {
 
   Process { id: focusAppProc; running: false }
 
+  property string activeWindowClass: ""
+  property string activeWindowTitle: ""
+
+  function normalizedApp(value) {
+    return String(value || "").toLowerCase()
+      .replace(/\.desktop$/g, "")
+      .replace(/[^a-z0-9]+/g, "")
+  }
+
+  function activeAppMatches(entry) {
+    if (!entry) return false
+    var klass = normalizedApp(activeWindowClass)
+    var title = normalizedApp(activeWindowTitle)
+    var candidates = [entry.app, entry.appIcon]
+    for (var i = 0; i < candidates.length; i++) {
+      var app = normalizedApp(candidates[i])
+      if (!app) continue
+      if (klass && (klass === app || klass.indexOf(app) !== -1 || app.indexOf(klass) !== -1)) return true
+      if (title && title.indexOf(app) !== -1) return true
+    }
+    return false
+  }
+
+  function dismissPopupsForActiveApp() {
+    for (var i = popupModel.count - 1; i >= 0; i--) {
+      var row = popupModel.get(i)
+      if (activeAppMatches(row)) dismissPopup(i)
+    }
+  }
+
+  Process {
+    id: activeWindowProc
+    command: ["hyprctl", "-j", "activewindow"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var window = JSON.parse(String(text || "{}"))
+          service.activeWindowClass = String(window.class || window.initialClass || "")
+          service.activeWindowTitle = String(window.title || "")
+          service.dismissPopupsForActiveApp()
+        } catch (e) {
+          service.activeWindowClass = ""
+          service.activeWindowTitle = ""
+        }
+      }
+    }
+  }
+
+  Timer {
+    interval: 500
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: if (!activeWindowProc.running) activeWindowProc.running = true
+  }
+
   // ---------------------------------------------------- image cache
   //
   // Notifications coming from screenshot helpers ship an `image-path` hint
@@ -803,22 +860,29 @@ Item {
       readonly property var popupPlacement: NotificationLogic.popupPlacement(
         service.barPosition, service.barClearance, Style.gapsOut)
 
-      // Full-screen, fixed-size surface (like the OSD overlay). Adding or
-      // removing a toast changes only the content inside; the Wayland surface
-      // never resizes, so the compositor can't briefly scale a stale buffer --
-      // which is what stretched/squished the cards during count changes.
-      anchors { top: true; bottom: true; left: true; right: true }
+      // Content-sized surface (not full-screen). A full-screen transparent
+      // overlay makes compositor `no_screen_share` black out the entire
+      // output; sizing to the toast column keeps only the cards private.
+      anchors {
+        top: popupPlacement.anchors.top
+        bottom: popupPlacement.anchors.bottom
+        left: popupPlacement.anchors.left
+        right: popupPlacement.anchors.right
+      }
+      margins {
+        top: popupPlacement.margins.top
+        bottom: popupPlacement.margins.bottom
+        left: popupPlacement.margins.left
+        right: popupPlacement.margins.right
+      }
 
-      // Keep the surface click-through except over the toast column, so the
-      // rest of the (invisible) full-screen overlay never eats input.
-      mask: Region { item: popupColumn }
+      implicitWidth: Math.max(1, popupColumn.implicitWidth)
+      implicitHeight: Math.max(1, popupColumn.implicitHeight)
 
       ColumnLayout {
         id: popupColumn
-        anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: popupWindow.popupPlacement.margins.top
-        anchors.rightMargin: popupWindow.popupPlacement.margins.right
+        anchors.right: parent.right
         spacing: Style.space(8)
 
         Repeater {

@@ -1,140 +1,48 @@
 #!/bin/bash
 
-FUZI_PATH="$HOME/.local/share/fuzi/wallpaper"
-FLAG_FILE="$HOME/.local/share/fuzi/toggles/save_screenshot"
+set -euo pipefail
 
-toggle_existing_menu() {
-  if pgrep -f "walker.*--dmenu" >/dev/null; then
-    walker --close >/dev/null 2>&1
-    exit 0
-  fi
+verb="${1-toggle}"
+route="${2-root}"
+
+menu_payload() {
+  perl -MEncode=decode -MJSON::PP=encode_json -e 'print encode_json({ menu => decode("UTF-8", $ARGV[0]) })' "$1"
 }
 
-menu() {
-  local prompt="$1"
-  local options="$2"
-  local extra="$3"
-  local preselect="$4"
-
-  read -r -a args <<<"$extra"
-
-  if [[ -n $preselect ]]; then
-    local index
-    index=$(echo -e "$options" | grep -nxF "$preselect" | cut -d: -f1)
-    if [[ -n $index ]]; then
-      args+=("-c" "$index")
-    fi
-  fi
-
-  echo -e "$options" | fuzi-launch-walker --dmenu --width 295 --minheight 1 --maxheight 630 -p "$prompt" "${args[@]}" 2>/dev/null
-}
-
-show_background_menu() {
-  if [[ ! -d "$FUZI_PATH" ]]; then
-    notify-send -u critical "Wallpaper Error" "Folder not found: $FUZI_PATH"
-    return 1
-  fi
-
-  local wp_options
-  wp_options=$(find -L "$FUZI_PATH" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) -printf "%f\n" | sort)
-
-  if [[ -z "$wp_options" ]]; then
-    notify-send -u critical "Wallpaper Error" "No images found in $FUZI_PATH (.jpg, .png, .webp)"
-    return 1
-  fi
-
-  local current_bg_path
-  local current_bg_name=""
-  current_bg_path=$(readlink -f "$HOME/.local/share/fuzi/background" 2>/dev/null)
-  if [[ -n "$current_bg_path" ]]; then
-    current_bg_name="${current_bg_path##*/}"
-  fi
-
-  local selected_file
-  selected_file=$(menu "Search..." "$wp_options" "" "$current_bg_name")
-
-  if [[ -n "$selected_file" ]]; then
-    fuzi-theme-bg-set "$FUZI_PATH/$selected_file"
-  fi
-}
-
-show_screen_menu() {
-  local screen_options="󰂛  Notifications\n  Telegram"
-
-  case $(menu "Search..." "$screen_options") in
-  *Notifications*)
-    fuzi-cmd-screen-notifications
-    ;;
-  *Telegram*)
-    fuzi-cmd-screen-telegram
-    ;;
-  esac
-}
-
-show_toggle_menu() {
-  local toggle_options="󰂛  Notifications\n  Screenshot save"
-
-  case $(menu "Search..." "$toggle_options") in
-  *Notifications*)
-    fuzi-toggle-notification-silencing
-    ;;
-  *Screenshot*)
-    fuzi-toggle-screenshot
-    ;;
-  esac
-}
-
-show_settings_menu() {
-  local settings_options="󰤨  Network\n  Bluetooth\n󰍛  Btop"
-
-  case $(menu "Search..." "$settings_options") in
-  *Network*)
-    fuzi-launch-wifi
-    ;;
-  *Bluetooth*)
-    fuzi-launch-bluetooth
-    ;;
-  *Btop*)
-    fuzi-launch-or-focus-tui btop
-    ;;
-  esac
-}
-
-show_main_menu() {
-  local options="  Settings\n  Wallpaper\n  Toggle\n󰹑  Screen"
-
-  case $(menu "Search..." "$options") in
-  *Settings*)
-    show_settings_menu
-    ;;
-  *Wallpaper*)
-    show_background_menu
-    ;;
-  *Toggle*)
-    show_toggle_menu
-    ;;
-  *Screen*)
-    show_screen_menu
-    ;;
-  esac
-}
-
-toggle_existing_menu
-
-case "$1" in
-settings)
-  show_settings_menu
-  ;;
-wallpaper)
-  show_background_menu
-  ;;
+case "$verb" in
 toggle)
-  show_toggle_menu
+  if [[ $(fuzi-shell shell isOpen fuzi.menu 2>/dev/null || true) == "true" ]]; then
+    exec fuzi-shell shell hide fuzi.menu
+  fi
+  exec fuzi-shell shell summon fuzi.menu "$(menu_payload "$route")"
   ;;
-screen)
-  show_screen_menu
+summon)
+  exec fuzi-shell shell summon fuzi.menu "$(menu_payload "$route")"
+  ;;
+close)
+  exec fuzi-shell shell hide fuzi.menu
+  ;;
+refresh | ping)
+  exec fuzi-shell shell call fuzi.menu "$verb" "{}"
+  ;;
+-h | --help | help)
+  cat <<USAGE
+Usage: fuzi menu [verb] [route]
+
+Verbs:
+  toggle [route]   Open the menu at <route>, or close it if already open. Default verb.
+  summon [route]   Always open the menu (no close-if-visible toggle).
+  close            Close the menu if it is visible.
+  refresh          Re-parse the menu JSONC files.
+  ping             Health check.
+
+Route is an item id (e.g. setup.power) or alias (e.g. power). Defaults to
+"root", which opens the top-level menu.
+USAGE
+  exit 0
   ;;
 *)
-  show_main_menu
+  echo "fuzi-menu: unknown verb '$verb'. Try 'fuzi menu --help'." >&2
+  exit 2
   ;;
 esac

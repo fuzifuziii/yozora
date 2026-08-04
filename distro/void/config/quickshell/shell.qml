@@ -27,23 +27,11 @@ ShellRoot {
   // FUZI_PATH is optional. When launching with `quickshell -p .../shell`,
   // Quickshell.shellDir is the shell entry directory — derive paths from it so
   // a missing env var does not produce an empty bar (plugins never found).
-  property string fuziPath: {
-    var env = Quickshell.env("FUZI_PATH")
-    if (env && String(env).length > 0) return String(env)
-    var dir = String(Quickshell.shellDir || "")
-    if (dir.endsWith("/shell")) return dir.substring(0, dir.length - 6)
-    return dir
-  }
-  readonly property string shellPath: {
-    var dir = String(Quickshell.shellDir || "")
-    if (dir.length > 0) return dir
-    return fuziPath.length > 0 ? (fuziPath + "/shell") : ""
-  }
+  readonly property string shellPath: home + "/.config/quickshell"
+  readonly property string fuziPath: Quickshell.env("FUZI_PATH") || shellPath
   readonly property string firstPartyPluginsDir: shellPath + "/plugins"
-  readonly property string defaultsPath: fuziPath.length > 0
-    ? (fuziPath + "/config/quickshell/shell.json")
-    : (home + "/.config/quickshell/shell.json")
-  readonly property string userConfigPath: home + "/.config/quickshell/shell.json"
+  readonly property string defaultsPath: shellPath + "/shell.json"
+  readonly property string userConfigPath: shellPath + "/shell.json"
 
   // Bundled fallback so the shell can start even when the default shell.json is
   // missing or unreadable. The bar config here mirrors the on-disk defaults
@@ -1012,6 +1000,10 @@ ShellRoot {
 
     function summon(id: string, payloadJson: string): string {
       return shell.summon(id, payloadJson) ? "ok" : "unknown"
+    }
+
+    function isOpen(id: string): string {
+      return shell.isPluginOpen(id) ? "true" : "false"
     }
 
     function hide(id: string): void {

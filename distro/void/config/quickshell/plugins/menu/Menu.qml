@@ -47,7 +47,7 @@ Item {
   // JSONC menu definitions. The shell parses both at startup and merges
   // the user file on top of the defaults, so the keybind → IPC → visible
   // path doesn't have to shell out to bash + jq on every open.
-  property string defaultMenuPath: fuziPath + "/default/fuzi/fuzi-menu.jsonc"
+  property string defaultMenuPath: fuziPath + "/fuzi-menu.jsonc"
   property string userMenuPath: Quickshell.env("HOME") + "/.config/quickshell/extensions/fuzi-menu.jsonc"
   property var defaultMenuItems: []
   property var userMenuItems: []
@@ -78,6 +78,7 @@ Item {
   // Shared application engine (entries, hidden filters, icons, launch,
   // removal), owned by the shell and also used by the standalone launcher.
   readonly property var appLibrary: root.shell ? root.shell.appLibrary : null
+  property bool showAppIcons: true
   property bool deleteConfirmOpen: false
   property var deleteTarget: null
   onOpenedChanged: if (!opened) { deleteConfirmOpen = false; deleteTarget = null }
@@ -1191,7 +1192,7 @@ Item {
 
               readonly property bool hasCursor: root.cursorActive && row.index === root.selectedIndex
               readonly property bool isApp: row.kind === "app"
-              readonly property bool hasIcon: row.icon.length > 0 || row.isApp
+               readonly property bool hasIcon: row.icon.length > 0 || (row.isApp && root.showAppIcons)
 
               width: ListView.view.width
               height: root.rowHeightForDetail(row.detail)
@@ -1227,7 +1228,7 @@ Item {
 
               Image {
                 id: appIconImage
-                visible: row.isApp
+                 visible: row.isApp && root.showAppIcons
                 width: Style.font.iconLarge
                 height: Style.font.iconLarge
                 fillMode: Image.PreserveAspectFit
