@@ -21,82 +21,34 @@ BarWidget {
   function close() { popupOpen = false }
   property real maxLabelWidth: 180
 
-  visible: hasMedia
-  implicitWidth: hasMedia ? row.implicitWidth + Style.space(14) : 0
+  visible: true
+  implicitWidth: Math.round(Style.bar.iconSlot * 1.35)
   implicitHeight: barSize
 
-  Row {
-    id: row
-    anchors.centerIn: parent
-    spacing: Style.space(6)
+  BarIconButton {
+    id: button
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: Style.bar.iconSlot
+    height: root.barSize
+    bar: root.bar
+    text: "󰝚"
+    foreground: "#ffffff"
+    useActiveColor: false
+     tooltipText: ""
 
-    Text {
-      id: glyph
-      anchors.verticalCenter: parent.verticalCenter
-      text: root.playIcon
-      color: activePlayer && activePlayer.isPlaying ? root.bar.barForeground : Qt.darker(root.bar.barForeground, 1.5)
-      font.family: root.bar.fontFamily
-      font.pixelSize: Style.font.body
-      Behavior on color {
-        enabled: !root.bar || root.bar.foregroundAnimationEnabled
-        ColorAnimation { duration: 160 }
-      }
-    }
-
-    Item {
-      id: scrollClip
-      width: Math.min(root.maxLabelWidth, labelText.implicitWidth)
-      height: glyph.height
-      clip: true
-      anchors.verticalCenter: parent.verticalCenter
-      visible: !root.bar.vertical && root.title !== ""
-
-      Text {
-        id: labelText
-        text: root.title + (root.artist ? "  ·  " + root.artist : "")
-        color: root.bar.barForeground
-        font.family: root.bar.fontFamily
-        font.pixelSize: Style.font.body
-        anchors.verticalCenter: parent.verticalCenter
-
-        property bool needsScroll: implicitWidth > scrollClip.width
-
-        NumberAnimation on x {
-          id: scrollAnim
-          running: labelText.needsScroll && !root.popupOpen && !root.bar.vertical
-          loops: Animation.Infinite
-          duration: Math.max(6000, labelText.implicitWidth * 25)
-          from: scrollClip.width
-          to: -labelText.implicitWidth
-          easing.type: Easing.Linear
-        }
-      }
-    }
-  }
-
-  MouseArea {
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: root.activePlayer ? Qt.PointingHandCursor : Qt.ArrowCursor
-    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-
-    onClicked: function(mouse) {
-      if (!root.activePlayer) return
-      if (mouse.button === Qt.MiddleButton) {
-        if (root.mediaService) root.mediaService.runAction("next", false)
-      } else if (mouse.button === Qt.RightButton) {
-        root.popupOpen = !root.popupOpen
+    onPressed: function(mouseButton) {
+      if (mouseButton === Qt.MiddleButton) {
+        if (root.activePlayer && root.mediaService) root.mediaService.runAction("next", false)
       } else {
-        if (root.mediaService) root.mediaService.runAction("playPause", false)
+        root.popupOpen = true
       }
     }
-    onWheel: function(wheel) {
-      if (!root.activePlayer) return
-      if (wheel.angleDelta.y > 0 && root.mediaService) root.mediaService.runAction("previous", false)
-      else if (wheel.angleDelta.y < 0 && root.mediaService) root.mediaService.runAction("next", false)
+
+    onWheelMoved: function(delta) {
+      if (!root.activePlayer || !root.mediaService) return
+      root.mediaService.runAction(delta > 0 ? "previous" : "next", false)
     }
-    onEntered: if (root.bar) root.bar.showTooltip(root, root.hasMedia ? (root.title + (root.artist ? " — " + root.artist : "")) : "")
-    onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 
   PopupCard {
@@ -105,6 +57,7 @@ BarWidget {
     bar: root.bar
     owner: root
     open: root.popupOpen
+    centerOnBar: true
     contentWidth: popup.fittedContentWidth(Style.space(320))
     contentHeight: popup.fittedContentHeight(column.implicitHeight)
 

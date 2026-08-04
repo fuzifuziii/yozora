@@ -1,5 +1,5 @@
 stylesheets: ["../hyprland-preview-share-picker/style.css"]
-default_page: windows
+default_page: outputs
 window:
   height: 500
   width: 1000

@@ -360,7 +360,7 @@ PanelWindow {
 
       Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: dial.reading < 10 ? dial.reading.toFixed(1) : Math.round(dial.reading).toString()
+           text: dial.reading.toFixed(1)
         color: root.bar.foreground
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.display

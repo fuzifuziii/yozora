@@ -124,58 +124,146 @@ BarWidget {
       anchors.fill: parent
       spacing: Style.space(12)
 
-      Row {
-        width: parent.width
-        spacing: Style.space(12)
+       // Match the battery panel's compact hero and solid progress strip.
+       Item {
+         width: parent.width
+         implicitHeight: Math.max(monitorIcon.implicitHeight, monitorLabels.implicitHeight, monitorPercent.implicitHeight)
 
-        Text {
-          id: monitorIcon
-          width: implicitWidth
-          text: root.icon
-          color: root.busy ? Color.accent : root.bar.foreground
-          font.family: root.bar.fontFamily
-          font.pixelSize: Style.font.display
-          horizontalAlignment: Text.AlignLeft
-          anchors.verticalCenter: parent.verticalCenter
-        }
+         Text {
+           id: monitorIcon
+           text: root.icon
+           color: root.busy ? Color.accent : root.bar.foreground
+           font.family: root.bar.fontFamily
+           font.pixelSize: Style.font.display
+           anchors.left: parent.left
+           anchors.verticalCenter: parent.verticalCenter
+         }
 
-        Column {
-          width: parent.width - monitorIcon.width - Style.space(12)
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: Style.space(4)
+         Column {
+           id: monitorLabels
+           anchors.left: monitorIcon.right
+           anchors.leftMargin: Style.space(14)
+           anchors.right: monitorPercent.left
+           anchors.rightMargin: Style.space(10)
+           anchors.verticalCenter: parent.verticalCenter
+           spacing: Style.space(2)
 
-          Text {
-            width: parent.width
-            text: "System monitor"
-            color: root.bar.foreground
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.title
-            font.bold: true
-            elide: Text.ElideRight
-          }
+           Text {
+             width: parent.width
+             text: "System monitor"
+             color: root.bar.foreground
+             font.family: root.bar.fontFamily
+             font.pixelSize: Style.font.title
+             font.bold: true
+             elide: Text.ElideRight
+           }
 
-          Text {
-            width: parent.width
-            text: "SYSTEM LOAD   " + root.load1.toFixed(2) + "  " + root.load5.toFixed(2) + "  " + root.load15.toFixed(2)
-            color: Qt.darker(root.bar.foreground, 1.4)
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.caption
-            font.bold: true
-            font.letterSpacing: 1.2
-            elide: Text.ElideRight
-          }
-        }
-      }
+           Text {
+             width: parent.width
+             text: "SYSTEM LOAD"
+             color: Qt.darker(root.bar.foreground, 1.4)
+             font.family: root.bar.fontFamily
+             font.pixelSize: Style.font.caption
+             font.bold: true
+             font.letterSpacing: 1.2
+             elide: Text.ElideRight
+           }
+         }
 
-      MetricBlock {
-        title: "CPU"
-        value: root.percent(root.cpuUsage)
-        usage: root.cpuUsage
-        history: root.cpuHistory
-        accent: Color.accent
-        foreground: root.bar.foreground
-        fontFamily: root.bar.fontFamily
-      }
+         Text {
+           id: monitorPercent
+           text: root.percent(root.cpuUsage)
+           color: root.bar.foreground
+           font.family: root.bar.fontFamily
+           font.pixelSize: Style.font.displayLarge
+           font.bold: true
+           anchors.right: parent.right
+           anchors.verticalCenter: parent.verticalCenter
+         }
+       }
+
+       Item {
+         width: parent.width
+         implicitHeight: Style.space(8)
+
+         Rectangle {
+           anchors.fill: parent
+           radius: height / 2
+           color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.12)
+         }
+
+         Rectangle {
+           anchors.left: parent.left
+           anchors.verticalCenter: parent.verticalCenter
+           width: Math.max(height, parent.width * root.cpuUsage)
+           height: parent.height
+           radius: height / 2
+           color: root.bar.foreground
+           opacity: 0.96
+           Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+         }
+       }
+
+       Item {
+         width: parent.width
+         implicitHeight: ramLabels.implicitHeight + Style.space(8) + Style.space(5)
+
+         Column {
+           id: ramLabels
+           width: parent.width
+           spacing: Style.space(5)
+
+           Row {
+             width: parent.width
+
+             Text {
+               width: parent.width - ramValue.implicitWidth
+               text: "RAM"
+               color: root.bar.foreground
+               font.family: root.bar.fontFamily
+               font.pixelSize: Style.font.caption
+               font.bold: true
+             }
+
+             Text {
+               id: ramValue
+               text: root.percent(root.memUsage) + "  " + root.memUsedGb.toFixed(1) + "/" + root.memTotalGb.toFixed(1) + " GB"
+               color: root.bar.foreground
+               font.family: root.bar.fontFamily
+               font.pixelSize: Style.font.caption
+             }
+           }
+
+           Item {
+             width: parent.width
+             height: Style.space(8)
+
+             Rectangle {
+               anchors.fill: parent
+               radius: height / 2
+               color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.12)
+             }
+
+             Rectangle {
+               anchors.left: parent.left
+               anchors.verticalCenter: parent.verticalCenter
+               width: Math.max(height, parent.width * root.memUsage)
+               height: parent.height
+               radius: height / 2
+               color: root.bar.foreground
+               opacity: 0.96
+               Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+             }
+           }
+         }
+       }
+
+       Text {
+         text: root.load1.toFixed(2) + "  " + root.load5.toFixed(2) + "  " + root.load15.toFixed(2)
+         color: Qt.darker(root.bar.foreground, 1.4)
+         font.family: root.bar.fontFamily
+         font.pixelSize: Style.font.caption
+       }
 
       Text {
         text: "Top processes"
@@ -228,16 +316,7 @@ BarWidget {
         }
       }
 
-      MetricBlock {
-        title: "RAM"
-        value: root.percent(root.memUsage) + "  " + root.memUsedGb.toFixed(1) + "/" + root.memTotalGb.toFixed(1) + " GB"
-        usage: root.memUsage
-        history: root.memHistory
-        accent: root.busy ? Color.urgent : Color.accent
-        foreground: root.bar.foreground
-        fontFamily: root.bar.fontFamily
-      }
-    }
+     }
   }
 
   Process {

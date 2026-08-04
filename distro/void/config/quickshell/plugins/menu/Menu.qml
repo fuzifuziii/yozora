@@ -1132,7 +1132,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "…") : ((root.item(root.activeMenu) ? (root.item(root.activeMenu).title || root.item(root.activeMenu).label) : "Go") + "…"))
+            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "...") : Style.searchPlaceholder)
             color: root.foreground
             opacity: root.filterText ? 1 : 0.58
             font.family: root.fontFamily

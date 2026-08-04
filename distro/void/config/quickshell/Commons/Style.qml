@@ -30,6 +30,7 @@ QtObject {
 
   property int cornerRadius: 0
   property int gapsOut: 5
+  readonly property string searchPlaceholder: "Search..."
 
   // ---------------------------------------------------------- state tokens
   //

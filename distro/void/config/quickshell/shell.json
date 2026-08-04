@@ -21,6 +21,9 @@
         {
           "id": "fuzi.clock",
           "format": "dddd HH:mm"
+        },
+        {
+          "id": "fuzi.media"
         }
       ],
       "right": [

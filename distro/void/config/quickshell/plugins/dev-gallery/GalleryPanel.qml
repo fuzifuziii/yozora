@@ -1639,7 +1639,7 @@ Item {
                   width: Style.spacing.searchableDropdownWidth
                   label: "Add widget"
                   fontFamily: root.fontFamily
-                  placeholderText: "Search widgets..."
+                  placeholderText: Style.searchPlaceholder
                   hasCursor: root.focusSection === "searchable-dropdown" && root.selectedIndex === 0
                   onHovered: function(h) {
                     if (h) { root.focusSection = "searchable-dropdown"; root.selectedIndex = 0 }

@@ -43,10 +43,8 @@ Panel {
   readonly property date viewDate: new Date(viewYear, viewMonth, 1)
   readonly property bool viewingCurrentMonth: viewYear === today.getFullYear() && viewMonth === today.getMonth()
 
-  // Pinned to today, not to the month being browsed — stepping through the
-  // calendar does not change how much of the year is gone.
+  // Pinned to today, not to the month being browsed.
   readonly property real yearDone: Model.yearProgress(today.getFullYear(), today.getMonth(), today.getDate())
-  readonly property int yearDonePercent: Model.yearProgressPercent(today.getFullYear(), today.getMonth(), today.getDate())
 
   // Memento mori, for anyone who goes looking: double-tapping the year bar
   // asks for a birth year and a life expectancy, and a second bar tracks one
@@ -342,9 +340,7 @@ Panel {
             }
           }
 
-          // ---- Year progress, doubling as the rule under the hero:
-          //      a plain hairline said nothing, and whole days done
-          //      over days in the year says the same thing louder.
+          // ---- Year progress, with the next year at the far end of the rail.
           Item {
             width: parent.width
             height: yearBlock.y + yearBlock.height
@@ -417,7 +413,7 @@ Panel {
                 visible: !root.editingLife
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.today.getFullYear()
+                text: String(root.today.getFullYear())
                 color: Qt.darker(root.contentForeground, 1.5)
                 font.family: root.contentFontFamily
                 font.pixelSize: Style.font.bodySmall
@@ -425,11 +421,11 @@ Panel {
               }
 
               Text {
-                id: yearPercent
+                id: yearNext
                 visible: !root.editingLife
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.yearDonePercent + "%"
+                text: String(root.today.getFullYear() + 1)
                 color: root.contentForeground
                 font.family: root.contentFontFamily
                 font.pixelSize: Style.font.bodySmall
@@ -439,19 +435,20 @@ Panel {
                 id: yearTrack
                 visible: !root.editingLife
                 anchors.left: yearLabel.right
-                anchors.right: yearPercent.left
+                anchors.right: yearNext.left
                 anchors.leftMargin: Style.space(12)
                 anchors.rightMargin: Style.space(12)
                 anchors.verticalCenter: parent.verticalCenter
-                height: Style.space(6)
-                radius: Style.cornerRadius > 0 ? height / 2 : 0
+                height: Style.space(8)
+                radius: height / 2
                 color: Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.12)
 
                 Rectangle {
                   width: Math.round(parent.width * root.yearDone)
                   height: parent.height
                   radius: parent.radius
-                  color: Style.selectedStateColor(root.contentForeground, Color.accent)
+                  color: root.contentForeground
+                  opacity: 0.96
 
                   Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                 }

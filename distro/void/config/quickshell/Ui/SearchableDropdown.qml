@@ -21,7 +21,7 @@ Item {
   property string label: ""
   property string value: ""
   property var options: []
-  property string placeholderText: "Search..."
+  property string placeholderText: Style.searchPlaceholder
   property string emptyText: "No matches"
   property string triggerLabel: ""
 

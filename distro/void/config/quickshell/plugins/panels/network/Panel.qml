@@ -1048,7 +1048,7 @@ Panel {
 
   Timer {
     id: speedTestPhaseTimer
-    interval: 5000
+    interval: 11000
     repeat: false
     onTriggered: root.stopSpeedTestPhase()
   }

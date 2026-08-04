@@ -584,7 +584,7 @@ Panel {
               id: locationField
               width: Style.space(190)
               enabled: !root.savingLocation
-              placeholderText: "Search city"
+               placeholderText: Style.searchPlaceholder
               foreground: root.bar.foreground
               font.family: root.bar.fontFamily
 

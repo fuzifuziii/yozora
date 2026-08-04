@@ -27,7 +27,7 @@ Item {
   property var options: []
   property var optionsCommand: []
   property string optionsCommandCwd: ""
-  property string placeholderText: "Search..."
+  property string placeholderText: Style.searchPlaceholder
   property string emptyText: "No options"
   property string noSelectionText: "None selected"
   property string triggerLabel: ""
