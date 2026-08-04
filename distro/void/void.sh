@@ -10,10 +10,10 @@ PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
 # Packages for Yozora
-XBPS_PKGS=(elogind iwd xtools-minimal sddm dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
+XBPS_PKGS=(NetworkManager elogind iwd xtools-minimal sddm dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
-SRC_PKGS=(elephant walker tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker impala)
+SRC_PKGS=(tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
 
 # Helper functions
 e_repos() {
@@ -100,6 +100,13 @@ i_src() {
 
   popd >/dev/null
   echo -e "${GREEN}✓ Custom packages installed${NC}"
+}
+
+e_nm() {
+  echo -e "${BLUE}Enabling NetworkManager...${NC}"
+  sudo rm -rf /etc/sv/dhcpcd
+  sudo rm -rf /etc/sv/iwd
+  sudo ln -s /etc/sv/NetworkManager/ /var/service/
 }
 
 i_dbus() {

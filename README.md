@@ -4,16 +4,12 @@
 
 ## Included Software
 
-| Component       | Package   |
-| --------------- | --------- |
-| WM              | Hyprland  |
-| Bar             | Waybar    |
-| Terminal        | Kitty     |
-| Shell           | Fish      |
-| Notifications   | Mako      |
-| Launcher        | Walker    |
-| System Info     | Fastfetch |
-| Monitor         | Btop      |
+| Component       | Package    |
+| --------------- | ---------- |
+| WM              | Hyprland   |
+| Widgets         | Quickshell |
+| Terminal        | Kitty      |
+| Shell           | Fish       |
 
 ## Installation
 
@@ -45,5 +41,8 @@ Run the installer:
 ### Desktop
 ![Desktop view](screenshots/1.png)
 
+### Menu
+![Menu view](screenshots/2.png)
+
 ### Utilities
-![Utilities view](screenshots/2.png)
+![Utilities view](screenshots/3.png)
