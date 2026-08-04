@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "idle": {
+    "screensaver": 150,
+    "lock": 300
+  },
+  "bar": {
+    "position": "top",
+    "transparent": false,
+    "centerAnchor": "fuzi.clock",
+    "layout": {
+      "left": [
+        {
+          "id": "fuzi.workspaces"
+        }
+      ],
+      "center": [
+        {
+          "id": "fuzi.weather"
+        },
+        {
+          "id": "fuzi.clock",
+          "format": "dddd HH:mm"
+        },
+        {
+          "id": "fuzi.media"
+        }
+      ],
+      "right": [
+        {
+          "id": "fuzi.keyboard-layout"
+        },
+        {
+          "id": "fuzi.bluetooth"
+        },
+        {
+          "id": "fuzi.network"
+        },
+        {
+          "id": "fuzi.tray"
+        },
+        {
+          "id": "fuzi.audio"
+        },
+        {
+          "id": "fuzi.system-monitor"
+        },
+        {
+          "id": "fuzi.power"
+        }
+      ]
+    }
+  },
+  "plugins": []
+}

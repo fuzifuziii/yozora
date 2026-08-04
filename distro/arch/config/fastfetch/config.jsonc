@@ -4,15 +4,15 @@
       "1": "green",
       "2": "blue"
     },
-    "height": 15,
+    "height": 16,
+    "width": 35,
     "padding": {
       "left": 2,
       "right": 6,
       "top": 2
     },
     "source": "/home/fuzifuziii/Pictures/.g/g.jpg",
-    "type": "kitty",
-    "width": 35
+    "type": "kitty"
   },
   "modules": [
     "break",
@@ -74,7 +74,7 @@
     {
       "key": "│ ├󰔫",
       "keyColor": "blue",
-      "text": "echo \"Yozora 2.2\"",
+      "text": "echo \"Yozora 2.3\"",
       "type": "command"
     },
     {

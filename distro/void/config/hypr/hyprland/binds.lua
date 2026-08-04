@@ -5,7 +5,6 @@ hl.bind("SUPER + SHIFT + A", hl.dsp.exec_cmd("steam"), { description = "Steam" }
 hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("Telegram"), { description = "Telegram" })
 hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("discord"), { description = "Discord" })
 hl.bind("SUPER + I", hl.dsp.exec_cmd("systemsettings"), { description = "Settings" })
-hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("fuzi-launch-tui btop"), { description = "Btop" })
 hl.bind("SUPER + Q", hl.dsp.window.close())
 hl.bind("SUPER + J", hl.dsp.layout("togglesplit"), { description = "Split" })
 hl.bind("SUPER + T", hl.dsp.window.float({ action = "toggle" }), { description = "Float" })
