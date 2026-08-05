@@ -823,6 +823,27 @@ ShellRoot {
 
   // --------------------------------------------------- image selector IPC
 
+  IpcHandler {
+    target: "file-selector"
+
+    function open(directory: string, title: string, selectionFile: string, doneFile: string): string {
+      var payload = JSON.stringify({
+        directory: directory,
+        title: title,
+        selectionFile: selectionFile,
+        doneFile: doneFile
+      })
+      return shell.summon("fuzi.file-picker", payload) ? "ok" : "unknown"
+    }
+
+    function cancel(): string {
+      var loader = panelLoaders["fuzi.file-picker"]
+      if (loader && loader.item && typeof loader.item.close === "function") loader.item.close()
+      else shell.hide("fuzi.file-picker")
+      return "ok"
+    }
+  }
+
   function imagePickerItem() {
     var loader = panelLoaders["fuzi.image-picker"]
     return loader && loader.item ? loader.item : null

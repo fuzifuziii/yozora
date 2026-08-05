@@ -51,5 +51,9 @@
       ]
     }
   },
-  "plugins": []
+  "plugins": [
+    {
+      "id": "fuzi.file-picker"
+    }
+  ]
 }

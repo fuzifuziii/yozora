@@ -2,7 +2,7 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("pipewire")
 	hl.exec_cmd("dbus-update-activation-environment --all")
 
-	hl.exec_cmd("qs")
+	hl.exec_cmd("quickshell")
 	hl.exec_cmd("fuzi-powerprofiles-init")
 
 	hl.exec_cmd("bitwarden")
