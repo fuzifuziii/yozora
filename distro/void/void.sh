@@ -107,7 +107,7 @@ e_nm() {
   sudo rm -rf /etc/sv/dhcpcd
   sudo rm -rf /etc/sv/iwd
   sudo ln -s /etc/sv/NetworkManager/ /var/service/
-  sudo xpbs-remove -y dhcpd iwd
+  sudo xbps-remove -y dhcpd iwd
 }
 
 i_dbus() {
