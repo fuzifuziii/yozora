@@ -161,7 +161,7 @@ e_nm() {
 
   if [[ ${#pkgs_to_remove[@]} -gt 0 ]]; then
     echo -e "${BLUE}Removing packages: ${pkgs_to_remove[*]}${NC}"
-    sudo xbps-remove -y "${pkgs_to_remove[@]}" || {
+    sudo xbps-remove -yF "${pkgs_to_remove[@]}" || {
       echo -e "${RED}Failed to remove packages${NC}"
       return 1
     }
@@ -358,10 +358,28 @@ i_yozora() {
   fi
 
   echo -e "\n${BLUE}Enabling SDDM display manager...${NC}"
-  if [ -d /etc/sv/sddm ]; then
-    sudo ln -sf /etc/sv/sddm /var/service/
-    sudo ln -sf /etc/sv/dbus /var/service/
-    echo -e "${GREEN}✓ SDDM service enabled${NC}"
+  if [[ ! -d /etc/sv/sddm ]]; then
+    echo -e "${RED}sddm service not found in /etc/sv, is sddm installed?${NC}"
+  else
+    if [[ -L /var/service/sddm ]]; then
+      echo -e "${YELLOW}sddm is already enabled, skipping${NC}"
+    else
+      if sudo ln -sf /etc/sv/sddm /var/service/; then
+        echo -e "${GREEN}✓ SDDM service enabled${NC}"
+      else
+        echo -e "${RED}Failed to enable sddm service${NC}"
+      fi
+    fi
+
+    if [[ -d /etc/sv/dbus ]]; then
+      if [[ -L /var/service/dbus ]]; then
+        echo -e "${YELLOW}dbus is already enabled, skipping${NC}"
+      else
+        sudo ln -sf /etc/sv/dbus /var/service/ || echo -e "${RED}Failed to enable dbus service${NC}"
+      fi
+    else
+      echo -e "${YELLOW}dbus service dir not found, skipping${NC}"
+    fi
   fi
 
   i_dbus
