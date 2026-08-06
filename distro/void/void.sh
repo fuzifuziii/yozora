@@ -122,24 +122,96 @@ i_src() {
 
 e_nm() {
   echo -e "${BLUE}Enabling NetworkManager...${NC}"
-  sudo rm -rf /etc/sv/dhcpcd
-  sudo rm -rf /etc/sv/iwd
-  sudo ln -s /etc/sv/NetworkManager/ /var/service/
-  sudo xbps-remove -y dhcpd iwd
+
+  if [[ ! -d /etc/sv/NetworkManager ]]; then
+    echo -e "${RED}NetworkManager service not found in /etc/sv, is it installed?${NC}"
+    return 1
+  fi
+
+  if [[ -L /var/service/NetworkManager ]]; then
+    echo -e "${YELLOW}NetworkManager is already enabled, skipping symlink step${NC}"
+  else
+    sudo ln -s /etc/sv/NetworkManager/ /var/service/ || {
+      echo -e "${RED}Failed to enable NetworkManager service${NC}"
+      return 1
+    }
+    echo -e "${GREEN}✓ NetworkManager service enabled${NC}"
+  fi
+
+  if [[ -d /etc/sv/dhcpcd ]]; then
+    echo -e "${BLUE}Removing dhcpcd service...${NC}"
+    sudo rm -rf /etc/sv/dhcpcd
+  else
+    echo -e "${YELLOW}dhcpcd service dir not found, skipping${NC}"
+  fi
+
+  if [[ -d /etc/sv/iwd ]]; then
+    echo -e "${BLUE}Removing iwd service...${NC}"
+    sudo rm -rf /etc/sv/iwd
+  else
+    echo -e "${YELLOW}iwd service dir not found, skipping${NC}"
+  fi
+
+  local pkgs_to_remove=()
+  for pkg in dhcpcd iwd; do
+    if xbps-query -p pkgver "$pkg" &>/dev/null; then
+      pkgs_to_remove+=("$pkg")
+    fi
+  done
+
+  if [[ ${#pkgs_to_remove[@]} -gt 0 ]]; then
+    echo -e "${BLUE}Removing packages: ${pkgs_to_remove[*]}${NC}"
+    sudo xbps-remove -y "${pkgs_to_remove[@]}" || {
+      echo -e "${RED}Failed to remove packages${NC}"
+      return 1
+    }
+  else
+    echo -e "${YELLOW}dhcpcd/iwd packages not installed, nothing to remove${NC}"
+  fi
+
+  echo -e "${GREEN}✓ NetworkManager setup complete${NC}"
 }
 
 i_dbus() {
   local orig="/usr/share/wayland-sessions/hyprland.desktop"
   local target="/usr/share/wayland-sessions/hyprland-dbus.desktop"
 
-  sudo cp "$orig" "$target"
-  sudo sed -i 's|^Name=.*|Name=Hyprland (D-Bus)|' "$target"
-  sudo sed -i 's|^Exec=.*|Exec=dbus-run-session /usr/bin/start-hyprland|' "$target"
+  if [[ ! -f "$orig" ]]; then
+    echo -e "${RED}Original session file not found: $orig${NC}"
+    return 1
+  fi
+
+  if [[ -f "$target" ]]; then
+    echo -e "${YELLOW}$target already exists, skipping.${NC}"
+    return 0
+  fi
+
+  if ! command -v /usr/bin/start-hyprland &>/dev/null && [[ ! -x /usr/bin/start-hyprland ]]; then
+    echo -e "${YELLOW}Warning: /usr/bin/start-hyprland not found, proceeding anyway${NC}"
+  fi
+
+  sudo cp "$orig" "$target" || {
+    echo -e "${RED}Failed to copy $orig to $target${NC}"
+    return 1
+  }
+
+  sudo sed -i 's|^Name=.*|Name=Hyprland (D-Bus)|' "$target" || {
+    echo -e "${RED}Failed to update Name in $target${NC}"
+    sudo rm -f "$target"
+    return 1
+  }
+
+  sudo sed -i 's|^Exec=.*|Exec=dbus-run-session /usr/bin/start-hyprland|' "$target" || {
+    echo -e "${RED}Failed to update Exec in $target${NC}"
+    sudo rm -f "$target"
+    return 1
+  }
+
+  echo -e "${GREEN}✓ Created $target${NC}"
 }
 
 i_fonts() {
   echo -e "\n${BLUE}Preparing to install JetBrainsMono Nerd...${NC}"
-
   local font_dir="/usr/share/fonts/JetBrainsMonoNerd"
   local zip="/tmp/JetBrainsMono.zip"
 
@@ -148,11 +220,33 @@ i_fonts() {
     return 0
   fi
 
-  curl -fLo "$zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-  sudo mkdir -p "$font_dir"
-  sudo unzip -o "$zip" -d "$font_dir"
+  echo -e "${BLUE}Downloading JetBrainsMono Nerd Font...${NC}"
+  if ! curl -fLo "$zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip; then
+    echo -e "${RED}Failed to download font archive${NC}"
+    rm -f "$zip"
+    return 1
+  fi
+
+  sudo mkdir -p "$font_dir" || {
+    echo -e "${RED}Failed to create $font_dir${NC}"
+    rm -f "$zip"
+    return 1
+  }
+
+  if ! sudo unzip -o "$zip" -d "$font_dir"; then
+    echo -e "${RED}Failed to unzip font archive${NC}"
+    rm -f "$zip"
+    return 1
+  fi
+
   rm -f "$zip"
   sudo fc-cache -fv
+
+  if fc-list | grep -qi "JetBrainsMonoNerdFont"; then
+    echo -e "${GREEN}✓ JetBrainsMono Nerd Font installed${NC}"
+  else
+    echo -e "${YELLOW}Warning: font installed but not found in fc-list, check manually${NC}"
+  fi
 }
 
 # Installation functions
