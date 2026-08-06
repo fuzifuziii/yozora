@@ -3,7 +3,7 @@
 set -e
 
 # Packages
-BASE_PKGS=(python3-dbus-next wl-clipborad wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
+BASE_PKGS=(python3-dbus-next wl-clipboard wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
@@ -310,7 +310,7 @@ s_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install Xone drivers"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V2.2==================${NC}"
+  echo -e "${BLUE}=================V2.3==================${NC}"
 }
 
 while true; do
