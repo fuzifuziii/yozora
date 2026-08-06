@@ -36,13 +36,13 @@ e_xrepos() {
 
 i_src() {
   echo -e "\n${BLUE}=== Building and installing custom packages via xbps-src ===${NC}"
-
   if [[ ${#SRC_PKGS[@]} -eq 0 ]]; then
     echo -e "${RED}SRC_PKGS is empty${NC}"
     return 1
   fi
 
   WORK_DIR="/tmp/void-packages-fuzi"
+  FORCE_REBUILD="${FORCE_REBUILD:-0}"
 
   if [[ -d "$WORK_DIR" ]]; then
     echo -e "${BLUE}Updating void-packages-fuzi repository...${NC}"
@@ -62,12 +62,27 @@ i_src() {
     }
   fi
 
-  echo -e "\n${BLUE}Building packages one by one: ${SRC_PKGS[*]}${NC}"
+  is_pkg_built() {
+    local pkg="$1"
+    local hit
+    hit=$(find hostdir/binpkgs hostdir/binpkgs/dev -maxdepth 1 -type f \
+      -name "${pkg}-[0-9]*.xbps" 2>/dev/null | head -n1)
+    [[ -n "$hit" ]]
+  }
 
+  echo -e "\n${BLUE}Building packages one by one: ${SRC_PKGS[*]}${NC}"
   local built=()
   local failed=()
+  local skipped=()
 
   for pkg in "${SRC_PKGS[@]}"; do
+    if [[ "$FORCE_REBUILD" -ne 1 ]] && is_pkg_built "$pkg"; then
+      echo -e "${YELLOW}⏭ $pkg already built, skipping (set FORCE_REBUILD=1 to rebuild)${NC}"
+      skipped+=("$pkg")
+      built+=("$pkg")
+      continue
+    fi
+
     echo -e "\n${BLUE}>>> Building $pkg ...${NC}"
     if ./xbps-src pkg "$pkg"; then
       built+=("$pkg")
@@ -85,6 +100,9 @@ i_src() {
   fi
 
   echo -e "\n${BLUE}Successfully built: ${built[*]}${NC}"
+  if [[ ${#skipped[@]} -gt 0 ]]; then
+    echo -e "${YELLOW}Skipped (already built): ${skipped[*]}${NC}"
+  fi
   if [[ ${#failed[@]} -gt 0 ]]; then
     echo -e "${YELLOW}Failed: ${failed[*]}${NC}"
   fi
