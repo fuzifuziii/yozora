@@ -73,23 +73,6 @@ Item {
   property bool tooltipShown: false
   property int tooltipRequest: 0
   property var activePopout: null
-  property var barDragSource: null
-  property var barDragTarget: null
-  property var barDragTargetGeometry: null
-  property bool barDragAfter: false
-  property var barDragWindow: null
-  property var barDragScreen: null
-  property url barDragImageUrl: ""
-  property real barDragSceneX: 0
-  property real barDragSceneY: 0
-  property real barDragScreenX: 0
-  property real barDragScreenY: 0
-  property real barDragOffsetX: 0
-  property real barDragOffsetY: 0
-  property bool barMoveActive: false
-  property string barMoveCandidate: ""
-  property var barMoveWindow: null
-  property var barMoveScreen: null
   property var clickTargets: []
   property var moduleSlots: []
 
@@ -173,136 +156,6 @@ Item {
     tooltipTarget = null
     tooltipText = ""
     tooltipShown = false
-  }
-
-  function clearBarDrag() {
-    barDragSource = null
-    barDragWindow = null
-    barDragScreen = null
-    barDragImageUrl = ""
-    barDragTarget = null
-    barDragTargetGeometry = null
-    barDragAfter = false
-    barDragSceneX = 0
-    barDragSceneY = 0
-    barDragScreenX = 0
-    barDragScreenY = 0
-    barDragOffsetX = 0
-    barDragOffsetY = 0
-  }
-
-  function windowScreenPoint(scenePoint, window) {
-    var x = scenePoint ? scenePoint.x : 0
-    var y = scenePoint ? scenePoint.y : 0
-    if (!window || !window.screen) return { x: x, y: y }
-
-    if (root.position === "bottom")
-      y += Math.max(0, window.screen.height - window.height)
-    else if (root.position === "right")
-      x += Math.max(0, window.screen.width - window.width)
-
-    return { x: x, y: y }
-  }
-
-  function barDragScreenPoint(scenePoint) {
-    return windowScreenPoint(scenePoint, barDragWindow)
-  }
-
-  function dropMarkerRect(slot, after) {
-    if (!slot) return null
-
-    try {
-      var slotPoint = slot.mapToItem(null, 0, 0)
-      var screenPoint = barDragScreenPoint(slotPoint)
-      var thickness = Style.spacing.xs
-      if (vertical) {
-        return {
-          x: screenPoint.x,
-          y: screenPoint.y + (after ? slot.height : 0) - thickness / 2,
-          width: slot.width,
-          height: thickness
-        }
-      }
-
-      return {
-        x: screenPoint.x + (after ? slot.width : 0) - thickness / 2,
-        y: screenPoint.y,
-        width: thickness,
-        height: slot.height
-      }
-    } catch (e) {
-      return null
-    }
-  }
-
-  // Split the screen along its diagonals (in normalized space, so widescreens
-  // don't bias toward left/right): whichever triangle holds the cursor names
-  // the candidate edge.
-  function nearestScreenEdge(point, screen) {
-    var nx = screen.width > 0 ? Util.clamp(point.x / screen.width, 0, 1) : 0.5
-    var ny = screen.height > 0 ? Util.clamp(point.y / screen.height, 0, 1) : 0.5
-
-    var edge = "top"
-    var best = ny
-    if (1 - ny < best) { edge = "bottom"; best = 1 - ny }
-    if (nx < best) { edge = "left"; best = nx }
-    if (1 - nx < best) { edge = "right"; best = 1 - nx }
-    return edge
-  }
-
-  function beginBarMove(window) {
-    barMoveWindow = window
-    barMoveScreen = window ? window.screen : null
-    barMoveCandidate = position
-    barMoveActive = true
-  }
-
-  function updateBarMove(screenPoint) {
-    if (!barMoveActive || !barMoveScreen) return
-    barMoveCandidate = nearestScreenEdge(screenPoint, barMoveScreen)
-  }
-
-  function clearBarMove() {
-    barMoveActive = false
-    barMoveCandidate = ""
-    barMoveWindow = null
-    barMoveScreen = null
-  }
-
-  function finishBarMove() {
-    var edge = barMoveCandidate
-    if (!barMoveActive || !edge || edge === position) {
-      clearBarMove()
-      return
-    }
-
-    clearBarMove()
-    setBarPosition(edge)
-  }
-
-  function setBarPosition(value) {
-    var next = normalizePosition(value)
-    if (root.shell && typeof root.shell.mutateShellConfig === "function") {
-      root.shell.mutateShellConfig(function(config) {
-        if (!Util.isPlainObject(config.bar)) config.bar = {}
-        config.bar.position = next
-      })
-    } else {
-      root.position = next
-    }
-  }
-
-  function captureBarDragGhost(slot) {
-    var item = slot && slot.activeItem ? slot.activeItem : null
-    barDragImageUrl = ""
-    if (!item || typeof item.grabToImage !== "function") return
-
-    var grabWidth = Math.max(1, Math.ceil(item.width || item.implicitWidth || slot.width || 1))
-    var grabHeight = Math.max(1, Math.ceil(item.height || item.implicitHeight || slot.height || 1))
-    item.grabToImage(function(result) {
-      if (root.barDragSource !== slot || !result || !result.url) return
-      root.barDragImageUrl = result.url
-    }, Qt.size(grabWidth, grabHeight))
   }
 
   function requestPopout(owner) {
@@ -575,129 +428,6 @@ Item {
     }
   }
 
-  function rawLayoutSection(config, region) {
-    if (!Util.isPlainObject(config.bar)) config.bar = {}
-    if (!Util.isPlainObject(config.bar.layout)) config.bar.layout = {}
-    if (!Array.isArray(config.bar.layout[region])) config.bar.layout[region] = []
-
-    return config.bar.layout[region]
-  }
-
-  function rawEntryIndex(entries, name) {
-    for (var i = 0; i < entries.length; i++) {
-      if (root.entryId(entries[i]) === name) return i
-    }
-
-    return -1
-  }
-
-  function moveModuleInConfig(config, fromRegion, fromName, toRegion, beforeName) {
-    var fromEntries = rawLayoutSection(config, fromRegion)
-    var toEntries = rawLayoutSection(config, toRegion)
-    var fromIndex = rawEntryIndex(fromEntries, fromName)
-    if (fromIndex < 0) return false
-
-    var toIndex = beforeName ? rawEntryIndex(toEntries, beforeName) : toEntries.length
-    if (toIndex < 0) toIndex = toEntries.length
-
-    if (fromRegion === toRegion && fromIndex === toIndex) return false
-
-    var movedEntry = fromEntries[fromIndex]
-    fromEntries.splice(fromIndex, 1)
-
-    if (fromRegion === toRegion && fromIndex < toIndex) toIndex -= 1
-    if (toIndex < 0) toIndex = 0
-    if (toIndex > toEntries.length) toIndex = toEntries.length
-    if (fromRegion === toRegion && fromIndex === toIndex) {
-      fromEntries.splice(fromIndex, 0, movedEntry)
-      return false
-    }
-
-    toEntries.splice(toIndex, 0, movedEntry)
-    return true
-  }
-
-  function dropBarModule(source, toRegion, beforeName) {
-    if (!source || !source.region || !source.moduleName || !toRegion) return false
-    if (source.region === toRegion && source.moduleName === beforeName) return false
-    if (!root.shell || typeof root.shell.mutateShellConfig !== "function") return false
-
-    var changed = false
-    root.shell.mutateShellConfig(function(config) {
-      changed = moveModuleInConfig(config, source.region, source.moduleName, toRegion, beforeName)
-    })
-    return changed
-  }
-
-  function moduleDropAtScene(scenePoint, sourceSlot) {
-    var sourceWindow = root.slotWindow(sourceSlot) || root.barDragWindow
-    if (sourceWindow && sourceWindow.contentItem) {
-      var barPoint = sourceWindow.contentItem.mapFromItem(null, scenePoint.x, scenePoint.y)
-      if (barPoint.x < 0 || barPoint.x > sourceWindow.contentItem.width ||
-          barPoint.y < 0 || barPoint.y > sourceWindow.contentItem.height)
-        return null
-    }
-
-    var candidates = []
-    for (var i = 0; i < moduleSlots.length; i++) {
-      var slot = moduleSlots[i]
-      if (!slot || slot === sourceSlot || !slot.visible || slot.width <= 0 || slot.height <= 0) continue
-      if (sourceWindow && !root.sameWindow(root.slotWindow(slot), sourceWindow)) continue
-
-      var slotPoint = { x: slot.x, y: slot.y }
-      try {
-        slotPoint = slot.mapToItem(null, 0, 0)
-      } catch (e) {
-      }
-
-      candidates.push({
-        slot: slot,
-        x: slotPoint.x,
-        y: slotPoint.y,
-        width: slot.width,
-        height: slot.height
-      })
-    }
-
-    return BarModel.nearestDropTarget(candidates, scenePoint, root.vertical)
-  }
-
-  function visibleModuleSlot(region, name, sourceSlot) {
-    var sourceWindow = root.slotWindow(sourceSlot) || root.barDragWindow
-    for (var i = 0; i < moduleSlots.length; i++) {
-      var slot = moduleSlots[i]
-      if (!slot || slot === sourceSlot || slot.region !== region || slot.moduleName !== name ||
-          !slot.visible || slot.width <= 0 || slot.height <= 0) continue
-      if (sourceWindow && !root.sameWindow(root.slotWindow(slot), sourceWindow)) continue
-      return slot
-    }
-
-    return null
-  }
-
-  function nextVisibleModuleName(region, afterName, sourceSlot) {
-    var entries = layoutEntries(region)
-    var found = false
-    for (var i = 0; i < entries.length; i++) {
-      var name = entryId(entries[i])
-      if (!found) {
-        found = name === afterName
-        continue
-      }
-
-      if (visibleModuleSlot(region, name, sourceSlot)) return name
-    }
-
-    return ""
-  }
-
-  function dropBarModuleAtTarget(sourceSlot, targetSlot, afterTarget) {
-    if (!sourceSlot || !targetSlot) return false
-
-    var beforeName = afterTarget ? nextVisibleModuleName(targetSlot.region, targetSlot.moduleName, sourceSlot) : targetSlot.moduleName
-    return dropBarModule(sourceSlot, targetSlot.region, beforeName)
-  }
-
   function moduleTargetClickable(target) {
     return target
       && target.visible !== false
@@ -909,32 +639,6 @@ Item {
     }
   }
 
-  Variants {
-    model: Quickshell.screens
-
-    delegate: Component {
-      DragGhostPanel {
-        required property var modelData
-
-        screen: modelData
-        ghostScreen: modelData
-      }
-    }
-  }
-
-  Variants {
-    model: Quickshell.screens
-
-    delegate: Component {
-      BarMoveGhostPanel {
-        required property var modelData
-
-        screen: modelData
-        ghostScreen: modelData
-      }
-    }
-  }
-
   component BarPanel: PanelWindow {
     id: barWindow
 
@@ -1069,126 +773,6 @@ Item {
 
   Component { id: emptyModuleComponent; Item { implicitWidth: 0; implicitHeight: 0; visible: false } }
 
-  component DragGhostPanel: PanelWindow {
-    id: ghostWindow
-
-    required property var ghostScreen
-    readonly property bool screenMatches: root.barDragScreen === ghostScreen ||
-      (root.barDragScreen && ghostScreen && root.barDragScreen.name && ghostScreen.name && root.barDragScreen.name === ghostScreen.name)
-    readonly property bool active: root.barDragSource && root.barDragScreen && screenMatches
-    readonly property var sourceItem: root.barDragSource ? root.barDragSource.activeItem : null
-    readonly property int ghostPadding: Style.space(1)
-    readonly property int ghostWidth: sourceItem ? Math.max(1, Math.ceil(sourceItem.width)) : 1
-    readonly property int ghostHeight: sourceItem ? Math.max(1, Math.ceil(sourceItem.height)) : 1
-
-    visible: active && sourceItem !== null
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-
-    anchors {
-      top: true
-      bottom: true
-      left: true
-      right: true
-    }
-
-    // Visual-only drag feedback. Keep the input region empty so the ghost can
-    // sit under the cursor without stealing the MouseArea's active pointer grab.
-    mask: Region {}
-
-    Item {
-      visible: ghostWindow.visible
-      x: Math.round(root.barDragScreenX - root.barDragOffsetX - ghostWindow.ghostPadding)
-      y: Math.round(root.barDragScreenY - root.barDragOffsetY - ghostWindow.ghostPadding)
-      width: ghostWindow.ghostWidth + ghostWindow.ghostPadding * 2
-      height: ghostWindow.ghostHeight + ghostWindow.ghostPadding * 2
-
-      BorderSurface {
-        anchors.fill: parent
-        color: root.transparent ? "transparent" : root.background
-        borderSpec: Border.flat(root.barForeground, 1)
-        radius: Math.min(Style.cornerRadius, height / 2)
-        opacity: root.transparent ? 0.45 : 0.94
-      }
-
-      Image {
-        anchors.fill: parent
-        anchors.margins: ghostWindow.ghostPadding
-        source: root.barDragImageUrl
-        fillMode: Image.Stretch
-        smooth: true
-        opacity: 0.84
-      }
-    }
-
-    Rectangle {
-      readonly property var targetRect: root.barDragTargetGeometry
-
-      visible: ghostWindow.active && targetRect !== null
-      x: targetRect ? Math.round(targetRect.x) : 0
-      y: targetRect ? Math.round(targetRect.y) : 0
-      width: targetRect ? targetRect.width : 0
-      height: targetRect ? targetRect.height : 0
-      color: Color.accent
-      radius: Math.min(width, height) / 2
-    }
-  }
-
-  component BarMoveGhostPanel: PanelWindow {
-    id: moveGhostWindow
-
-    required property var ghostScreen
-    readonly property bool screenMatches: root.barMoveScreen === ghostScreen ||
-      (root.barMoveScreen && ghostScreen && root.barMoveScreen.name && ghostScreen.name && root.barMoveScreen.name === ghostScreen.name)
-    visible: root.barMoveActive && screenMatches
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "fuzi-bar-move-ghost"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-
-    anchors {
-      top: true
-      bottom: true
-      left: true
-      right: true
-    }
-
-    // Visual-only preview of the candidate edge. Keep the input region empty
-    // so the overlay never steals the gesture area's active pointer grab.
-    mask: Region {}
-
-    // One fixed-geometry slab per edge, crossfaded on candidate changes.
-    // Resizing a single slab between edges repaints mid-transition and
-    // flickers; fading between static ones does not.
-    Repeater {
-      model: ["top", "bottom", "left", "right"]
-
-      BorderSurface {
-        id: edgeSlab
-
-        required property string modelData
-        readonly property bool edgeVertical: modelData === "left" || modelData === "right"
-        readonly property int edgeSize: edgeVertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal
-
-        x: modelData === "right" ? parent.width - edgeSize : 0
-        y: modelData === "bottom" ? parent.height - edgeSize : 0
-        width: edgeVertical ? edgeSize : parent.width
-        height: edgeVertical ? parent.height : edgeSize
-        color: root.transparent ? "transparent" : root.background
-        borderSpec: Border.flat(root.barForeground, 1)
-        visible: opacity > 0
-        opacity: root.barMoveCandidate === modelData ? (root.transparent ? 0.45 : 0.7) : 0
-
-        Behavior on opacity {
-          NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-        }
-      }
-    }
-  }
-
   function findCenterAnchorEntry() {
     var entries = root.layoutEntries("center")
     var idx = root.entryIndex(entries, root.centerAnchor)
@@ -1222,8 +806,6 @@ Item {
 
       Item {
         anchors.fill: parent
-
-        CenterGestureArea { anchors.fill: parent }
 
         HoverHandler {
           onHoveredChanged: root.setCenterSectionHovered(hovered)
@@ -1268,8 +850,6 @@ Item {
       Item {
         anchors.fill: parent
 
-        CenterGestureArea { anchors.fill: parent }
-
         HoverHandler {
           onHoveredChanged: root.setCenterSectionHovered(hovered)
         }
@@ -1304,85 +884,6 @@ Item {
           anchors.top: centerAnchorModule.bottom
           anchors.horizontalCenter: centerAnchorModule.horizontalCenter
         }
-      }
-    }
-  }
-
-  component CenterGestureArea: MouseArea {
-    id: gestureArea
-
-    property bool dragging: false
-    property bool suppressClick: false
-    property real pressedX: 0
-    property real pressedY: 0
-    readonly property real dragThreshold: Style.space(4)
-
-    acceptedButtons: Qt.LeftButton
-    cursorShape: dragging ? Qt.ClosedHandCursor : Qt.ArrowCursor
-    pressAndHoldInterval: 200
-
-    function startDrag(x, y) {
-      if (dragging) return
-      dragging = true
-      root.beginBarMove(root.targetWindow(gestureArea))
-      var scenePoint = gestureArea.mapToItem(null, x, y)
-      root.updateBarMove(root.windowScreenPoint(scenePoint, root.barMoveWindow))
-    }
-
-    onPressed: function(mouse) {
-      dragging = false
-      suppressClick = false
-      pressedX = mouse.x
-      pressedY = mouse.y
-    }
-
-    onPressAndHold: function(mouse) {
-      startDrag(mouse.x, mouse.y)
-    }
-
-    onPositionChanged: function(mouse) {
-      if (!(mouse.buttons & Qt.LeftButton)) return
-
-      if (!dragging) {
-        var distance = Math.abs(mouse.x - pressedX) + Math.abs(mouse.y - pressedY)
-        if (distance < dragThreshold) return
-        startDrag(mouse.x, mouse.y)
-        return
-      }
-
-      var scenePoint = gestureArea.mapToItem(null, mouse.x, mouse.y)
-      root.updateBarMove(root.windowScreenPoint(scenePoint, root.barMoveWindow))
-    }
-
-    onReleased: function(mouse) {
-      if (!dragging) return
-      dragging = false
-      suppressClick = true
-      root.finishBarMove()
-      mouse.accepted = true
-    }
-
-    onCanceled: {
-      dragging = false
-      suppressClick = false
-      root.clearBarMove()
-    }
-
-    onClicked: function(mouse) {
-      if (suppressClick) {
-        suppressClick = false
-        mouse.accepted = true
-      }
-    }
-
-    onDoubleClicked: function(mouse) {
-      if (suppressClick) {
-        suppressClick = false
-        return
-      }
-      if (mouse.button === Qt.LeftButton) {
-        root.toggleTransparency()
-        mouse.accepted = true
       }
     }
   }
@@ -1467,7 +968,6 @@ Item {
       return componentLoader.item
     }
     readonly property bool hovered: moduleHover.hovered
-    readonly property bool dragSource: root.barDragSource === slot
     readonly property bool panelOpen: root.activePopout === slot.activeItem
     // Modules bigger than the mark they want (a text label in a padded slot,
     // a multi-line stack on a vertical bar) can say how long the open-panel
@@ -1483,18 +983,15 @@ Item {
     implicitHeight: activeItem && activeItem.visible ? activeItem.implicitHeight : 0
     width: implicitWidth
     height: implicitHeight
-    z: modulePointer.dragging ? 100 : 0
+    z: 0
 
     Component.onCompleted: root.registerModuleSlot(slot)
-    Component.onDestruction: {
-      if (root.barDragSource === slot) root.clearBarDrag()
-      root.unregisterModuleSlot(slot)
-    }
+    Component.onDestruction: root.unregisterModuleSlot(slot)
 
     HoverHandler { id: moduleHover }
 
     BorderSurface {
-      visible: slot.dragSource
+      visible: false
       anchors.fill: parent
       anchors.margins: Style.space(1)
       color: root.transparent ? "transparent" : root.background
@@ -1508,7 +1005,7 @@ Item {
       active: !slot.qmlCustom && !slot.registered
       sourceComponent: slot.commandCustom ? customCommandModuleComponent : emptyModuleComponent
       anchors.fill: parent
-      opacity: slot.dragSource ? 0.22 : 1.0
+      opacity: 1.0
       onLoaded: {
         slot.injectProps()
         Qt.callLater(slot.injectProps)
@@ -1520,7 +1017,7 @@ Item {
       active: slot.registered
       sourceComponent: slot.registered ? slot.registryComponent : null
       anchors.fill: parent
-      opacity: slot.dragSource ? 0.22 : 1.0
+      opacity: 1.0
       onLoaded: {
         slot.injectProps()
         Qt.callLater(slot.injectProps)
@@ -1532,7 +1029,7 @@ Item {
       active: slot.qmlCustom
       source: slot.qmlCustom ? root.customModuleSource(slot.entry) : ""
       anchors.fill: parent
-      opacity: slot.dragSource ? 0.22 : 1.0
+      opacity: 1.0
       onLoaded: {
         slot.injectProps()
         Qt.callLater(slot.injectProps)
@@ -1545,7 +1042,7 @@ Item {
       readonly property int inset: Style.space(2)
 
       visible: opacity > 0
-      opacity: slot.panelOpen && !slot.dragSource ? 0.9 : 0
+      opacity: slot.panelOpen ? 0.9 : 0
       color: Color.accent
       radius: Math.min(width, height) / 2
       width: root.vertical ? Style.space(2) : slot.panelIndicatorExtent

@@ -267,7 +267,7 @@ Item {
         visible: false
         layer.enabled: true
 
-        readonly property real slant: -0.18
+        readonly property real slant: 0
         readonly property real centerTop: width / 2 - slant * height / 2
         readonly property real centerBottom: width / 2 + slant * height / 2
         readonly property real reach: width / 2 + Math.abs(slant) * height / 2 + 4

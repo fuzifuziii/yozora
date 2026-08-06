@@ -27,7 +27,8 @@ BarWidget {
 
   BarIconButton {
     id: button
-    anchors.left: parent.left
+    anchors.left: root.vertical ? undefined : parent.left
+    anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
     anchors.verticalCenter: parent.verticalCenter
     width: Style.bar.iconSlot
     height: root.barSize
@@ -41,7 +42,7 @@ BarWidget {
       if (mouseButton === Qt.MiddleButton) {
         if (root.activePlayer && root.mediaService) root.mediaService.runAction("next", false)
       } else {
-        root.popupOpen = true
+        root.popupOpen = !root.popupOpen
       }
     }
 

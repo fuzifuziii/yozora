@@ -41,9 +41,9 @@ Item {
   property int expandedWidth: 768
   property int expandedHeight: 475
   property int sliceWidth: 108
-  property int sliceHeight: 432
+  property int sliceHeight: 108
   property int sliceSpacing: -30
-  property int skewOffset: 28
+  property int skewOffset: 0
   property int bottomChromeHeight: showLabels ? (filterable ? 104 : 74) : (filterable ? 60 : 30)
 
   onOpenedChanged: if (!opened) layoutSettled = false
