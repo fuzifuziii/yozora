@@ -14,6 +14,8 @@ hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 hl.env("QT_QPA_PLATFORMTHEME", "kde")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("XDG_MENU_PREFIX", "plasma-")
+hl.env("SAL_USE_VCLPLUGIN", "kf6")
+
 -- Cursor
 hl.env("XCURSOR_SIZE", "20")
 hl.env("HYPRCURSOR_SIZE", "20")

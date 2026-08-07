@@ -8,11 +8,6 @@ hl.layer_rule({
 	no_anim = true,
 })
 
-hl.layer_rule({
-	match = { namespace = "walker" },
-	no_anim = true,
-})
-
 hl.window_rule({
 	match = {
 		class = ".*",
@@ -52,42 +47,6 @@ hl.window_rule({
 	},
 	no_screen_share = true,
 	tag = "+floating-window",
-})
-
-hl.window_rule({
-	match = {
-		class = "((google-)?[cC]hrom(e|ium)|[bB]rave-browser|[mM]icrosoft-edge|Vivaldi-stable|helium)",
-	},
-	tag = "+chromium-based-browser",
-})
-
-hl.window_rule({
-	match = {
-		class = "([fF]irefox|zen|librewolf)",
-	},
-	tag = "+firefox-based-browser",
-})
-
-hl.window_rule({
-	match = {
-		tag = "chromium-based-browser",
-	},
-	float = false,
-	opacity = "1 0.97",
-})
-
-hl.window_rule({
-	match = {
-		tag = "firefox-based-browser",
-	},
-	opacity = "1 0.97",
-})
-
-hl.window_rule({
-	match = {
-		initial_title = "((?i)(?:[a-z0-9-]+.)*youtube.com_/|app.zoom.us_/wc/home)",
-	},
-	opacity = "1.0 1.0",
 })
 
 hl.window_rule({
@@ -167,15 +126,7 @@ hl.window_rule({
 	size = "600 338",
 	keep_aspect_ratio = true,
 	border_size = 0,
-	opacity = "1 1",
 	move = "(monitor_w-window_w-40) (monitor_h*0.04)",
-})
-
-hl.window_rule({
-	match = {
-		class = "qemu",
-	},
-	opacity = "1 1",
 })
 
 hl.window_rule({
@@ -207,13 +158,6 @@ hl.window_rule({
 		class = "org.gnome.Calculator",
 	},
 	float = true,
-})
-
-hl.window_rule({
-	match = {
-		class = "^(resolve|zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$",
-	},
-	opacity = "1 1",
 })
 
 hl.window_rule({

@@ -10,13 +10,14 @@ Item {
   id: root
 
   property bool opened: false
-  property string icon: ""
+  property string icon: "󰕾"
   property string message: ""
   property string iconKey: ""
   property int value: 0
   property int maxValue: 100
   property bool hasProgress: true
   property int duration: 1200
+  readonly property string effectiveIcon: root.icon || "󰕾"
 
   readonly property bool mediaOsd: iconKey.indexOf("media") === 0 || iconKey.indexOf("player") === 0
 
@@ -103,7 +104,7 @@ Item {
     id: iconMetrics
     font.family: Style.font.family
     font.pixelSize: Style.font.displayLarge
-    text: root.icon
+    text: root.effectiveIcon
   }
 
   TextMetrics {
@@ -163,7 +164,7 @@ Item {
             // column is wider than this particular glyph.
             x: Math.round((root.iconWidth - root.iconInkWidth) / 2 - iconMetrics.tightBoundingRect.x)
             anchors.verticalCenter: parent.verticalCenter
-            text: root.icon
+            text: root.effectiveIcon
             font: iconMetrics.font
             color: Color.popups.text
           }
