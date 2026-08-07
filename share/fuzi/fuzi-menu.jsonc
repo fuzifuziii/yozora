@@ -1,5 +1,6 @@
 {
   // Root Menu
+  "bar": {"icon":"󰯋","label":"Bar","action":"fuzi-bar layout"},
   "wallpaper": {"icon":"","label":"Wallpaper","aliases":["background"],"action":"background=$(fuzi-theme-bg-switcher); [[ -n $background ]] && fuzi-theme-bg-set \"$background\""},
   "screen": {"icon":"󰹑","label":"Screen"},
 

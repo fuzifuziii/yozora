@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "fuzi.mihomo",
+  "name": "Mihomo",
+  "version": "1.0.0",
+  "author": "Fuzi",
+  "description": "Mihomo proxy status and selection",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "Mihomo.qml" },
+  "barWidget": {
+    "displayName": "Mihomo",
+    "description": "Mihomo proxy status and selection",
+    "category": "Network",
+    "allowMultiple": false
+  }
+}

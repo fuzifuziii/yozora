@@ -580,7 +580,9 @@ Panel {
   PwNodePeakMonitor {
     id: inputPeakMonitor
     node: root.source
-    enabled: root.opened && !!root.source
+    // Peak monitoring creates a PipeWire capture stream. On this setup that
+    // stream makes PipeWire disconnect when the panel opens.
+    enabled: false
   }
 
   Process {

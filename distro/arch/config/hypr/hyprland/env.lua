@@ -1,5 +1,4 @@
 -- Wayland --
-hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("SDL_VIDEODRIVER", "wayland")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
@@ -38,5 +37,6 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("TERMINAL", "xdg-terminal-exec")
 hl.env("EDITOR", "nvim")
 
-hl.env("FUZI_PATH", os.getenv("HOME") .. "/.local/share/fuzi")
-hl.env("PATH", os.getenv("FUZI_PATH") .. "/bin:" .. os.getenv("FUZI_PATH") .. "/pg:" .. os.getenv("PATH"))
+local fuzi_path = os.getenv("HOME") .. "/.local/share/fuzi"
+hl.env("FUZI_PATH", fuzi_path)
+hl.env("PATH", fuzi_path .. "/bin:" .. fuzi_path .. "/pg:" .. os.getenv("PATH"))

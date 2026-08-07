@@ -1,12 +1,5 @@
 {
-  "version": 1,
-  "idle": {
-    "screensaver": 150,
-    "lock": 300
-  },
   "bar": {
-    "position": "top",
-    "transparent": false,
     "centerAnchor": "fuzi.clock",
     "layout": {
       "left": [
@@ -19,8 +12,8 @@
           "id": "fuzi.weather"
         },
         {
-          "id": "fuzi.clock",
-          "format": "dddd HH:mm"
+          "format": "dddd HH:mm",
+          "id": "fuzi.clock"
         },
         {
           "id": "fuzi.media"
@@ -28,16 +21,19 @@
       ],
       "right": [
         {
+          "id": "fuzi.tray"
+        },
+        {
           "id": "fuzi.keyboard-layout"
         },
         {
           "id": "fuzi.bluetooth"
         },
         {
-          "id": "fuzi.network"
+          "id": "fuzi.mihomo"
         },
         {
-          "id": "fuzi.tray"
+          "id": "fuzi.network"
         },
         {
           "id": "fuzi.audio"
@@ -52,11 +48,18 @@
           "id": "fuzi.dnd"
         }
       ]
-    }
+    },
+    "position": "top",
+    "transparent": false
+  },
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
   },
   "plugins": [
     {
       "id": "fuzi.file-picker"
     }
-  ]
+  ],
+  "version": 1
 }

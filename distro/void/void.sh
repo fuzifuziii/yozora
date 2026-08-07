@@ -13,7 +13,7 @@ OTHER_PKGS=(xone)
 XBPS_PKGS=(NetworkManager elogind iwd xtools-minimal sddm dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
-SRC_PKGS=(tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
+SRC_PKGS=(mihomo tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
 
 # Helper functions
 e_repos() {
@@ -388,6 +388,7 @@ i_yozora() {
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
   mkdir -p ~/.icons && sudo ln -sf /usr/share/icons/Adwaita ~/.icons/default
   sudo ln -sf /etc/sv/power-profiles-daemon /var/service/
+  sudo ln -sf /etc/sv/mihomo /var/service/
 
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
 }
@@ -440,7 +441,7 @@ s_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install Xone drivers"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V2.3==================${NC}"
+  echo -e "${BLUE}=================V2.4==================${NC}"
 }
 
 while true; do

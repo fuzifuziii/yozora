@@ -824,6 +824,12 @@ ShellRoot {
   // --------------------------------------------------- image selector IPC
 
   IpcHandler {
+    target: "bar-layout"
+    function open(): string { return shell.summon("fuzi.bar-layout", "") ? "ok" : "unknown" }
+    function close(): string { shell.hide("fuzi.bar-layout"); return "ok" }
+  }
+
+  IpcHandler {
     target: "file-selector"
 
     function open(directory: string, title: string, selectionFile: string, doneFile: string): string {

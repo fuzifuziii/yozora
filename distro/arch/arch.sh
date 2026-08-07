@@ -12,7 +12,7 @@ OTHER_PKGS=(xone-dkms)
 # Packages for Yozora
 PACMAN_PKGS=(sddm dolphin fastfetch fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq)
 FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetbrains-mono-nerd)
-AUR_PKGS=(hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
+AUR_PKGS=(mihomo hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
 # Helper functions
 e_repos() {
@@ -159,6 +159,9 @@ i_yozora() {
   sudo systemctl enable sddm
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
+  sudo systemctl enable --now power-profiles-daemon
+  sudo systemctl enable --now mihomo
+
   if command -v elephant &>/dev/null; then
     elephant service enable || true
   fi
@@ -213,7 +216,7 @@ s_menu() {
   echo -e "4) Install CUPS"
   echo -e "5) Install Xone drivers"
   echo -e "6) Exit"
-  echo -e "${BLUE}=================V2.3==================${NC}"
+  echo -e "${BLUE}=================V2.4==================${NC}"
 }
 
 while true; do
