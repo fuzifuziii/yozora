@@ -1,21 +1,14 @@
 #!/bin/bash
-# Rearrange Quickshell bar modules and change bar edge.
-# Uses python3 for JSON (no jq required).
-#
-#   fuzi-bar show
-#   fuzi-bar position top|bottom|left|right
-#   fuzi-bar move <id> left|center|right
-#   fuzi-bar shift <id> earlier|later
-#   fuzi-bar hide <id>
-#   fuzi-bar place <id>          # optional interactive (fuzi-menu-select)
-#   fuzi-bar layout              # graphical layout editor
 
 set -euo pipefail
 
 SHELL_JSON="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/shell.json"
 DEFAULTS_JSON="${FUZI_PATH:-}/config/quickshell/shell.json"
 
-fail() { echo "fuzi-bar: $*" >&2; exit 1; }
+fail() {
+  echo "fuzi-bar: $*" >&2
+  exit 1
+}
 
 resolve_source() {
   if [[ -s $SHELL_JSON ]]; then
@@ -31,9 +24,9 @@ resolve_source() {
 
 reload_shell() {
   if command -v fuzi-shell >/dev/null 2>&1; then
-    fuzi-shell shell reloadConfig >/dev/null 2>&1 \
-      || fuzi-shell -q shell rescanPlugins >/dev/null 2>&1 \
-      || true
+    fuzi-shell shell reloadConfig >/dev/null 2>&1 ||
+      fuzi-shell -q shell rescanPlugins >/dev/null 2>&1 ||
+      true
   fi
 }
 
@@ -102,6 +95,7 @@ LABELS = {
     "fuzi.media": "Media",
     "fuzi.keyboard-layout": "Keyboard",
     "fuzi.bluetooth": "Bluetooth",
+    "fuzi.mihomo": "Mihomo",
     "fuzi.network": "Network",
     "fuzi.tray": "Tray",
     "fuzi.audio": "Audio",
@@ -206,20 +200,21 @@ PY
 
 label_of() {
   case "$1" in
-    fuzi.workspaces) echo "Workspaces" ;;
-    fuzi.weather) echo "Weather" ;;
-    fuzi.clock) echo "Clock" ;;
-    fuzi.media) echo "Media" ;;
-    fuzi.keyboard-layout) echo "Keyboard" ;;
-    fuzi.bluetooth) echo "Bluetooth" ;;
-    fuzi.network) echo "Network" ;;
-    fuzi.tray) echo "Tray" ;;
-    fuzi.audio) echo "Audio" ;;
-    fuzi.system-monitor) echo "System monitor" ;;
-    fuzi.power) echo "Power" ;;
-    fuzi.dnd) echo "Do not disturb" ;;
-    fuzi.active-window) echo "Active window" ;;
-    *) echo "${1#fuzi.}" ;;
+  fuzi.workspaces) echo "Workspaces" ;;
+  fuzi.weather) echo "Weather" ;;
+  fuzi.clock) echo "Clock" ;;
+  fuzi.media) echo "Media" ;;
+  fuzi.keyboard-layout) echo "Keyboard" ;;
+  fuzi.bluetooth) echo "Bluetooth" ;;
+  fuzi.mihomo) echo "Mihomo" ;;
+  fuzi.network) echo "Network" ;;
+  fuzi.tray) echo "Tray" ;;
+  fuzi.audio) echo "Audio" ;;
+  fuzi.system-monitor) echo "System monitor" ;;
+  fuzi.power) echo "Power" ;;
+  fuzi.dnd) echo "Do not disturb" ;;
+  fuzi.active-window) echo "Active window" ;;
+  *) echo "${1#fuzi.}" ;;
   esac
 }
 
@@ -245,49 +240,49 @@ place() {
     -- --width 280) || exit 1
 
   case "$choice" in
-    Left)    py_bar move "$id" left ;;
-    Center)  py_bar move "$id" center ;;
-    Right)   py_bar move "$id" right ;;
-    Earlier) py_bar shift "$id" earlier ;;
-    Later)   py_bar shift "$id" later ;;
-    Hide)    py_bar hide "$id" ;;
-    *)       fail "unknown choice: $choice" ;;
+  Left) py_bar move "$id" left ;;
+  Center) py_bar move "$id" center ;;
+  Right) py_bar move "$id" right ;;
+  Earlier) py_bar shift "$id" earlier ;;
+  Later) py_bar shift "$id" later ;;
+  Hide) py_bar hide "$id" ;;
+  *) fail "unknown choice: $choice" ;;
   esac
 }
 
 cmd="${1-show}"
 case "$cmd" in
-  layout|gui)
-    quickshell ipc call bar-layout open >/dev/null
-    ;;
-  show|status|get|"")
-    py_bar show
-    ;;
-  position)
-    py_bar position "${2-}"
-    ;;
-  modules|list)
-    py_bar show
-    ;;
-  move)
-    py_bar move "${2-}" "${3-}"
-    ;;
-  shift)
-    py_bar shift "${2-}" "${3-}"
-    ;;
-  hide)
-    py_bar hide "${2-}"
-    ;;
-  show-module)
-    py_bar move "${2-}" "${3:-right}"
-    ;;
-  place)
-    place "${2-}"
-    ;;
-  -h|--help|help)
-    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
-    ;;
-  *)
-    fail "unknown command '$cmd'"
-    ;;
+layout | gui)
+  quickshell ipc call bar-layout open >/dev/null
+  ;;
+show | status | get | "")
+  py_bar show
+  ;;
+position)
+  py_bar position "${2-}"
+  ;;
+modules | list)
+  py_bar show
+  ;;
+move)
+  py_bar move "${2-}" "${3-}"
+  ;;
+shift)
+  py_bar shift "${2-}" "${3-}"
+  ;;
+hide)
+  py_bar hide "${2-}"
+  ;;
+show-module)
+  py_bar move "${2-}" "${3:-right}"
+  ;;
+place)
+  place "${2-}"
+  ;;
+-h | --help | help)
+  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  ;;
+*)
+  fail "unknown command '$cmd'"
+  ;;
 esac
