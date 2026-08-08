@@ -52,7 +52,7 @@ BarWidget {
     var parts = String(line || "").trim().split(/\s+/)
     if (parts[0] === "proc" && parts.length >= 4) {
       var next = root.processes.slice()
-      var processCpu = Math.max(0, Math.min(100, Number(parts[2]) || 0))
+      var processCpu = Math.max(0, Number(parts[2]) || 0)
       var processMem = Math.max(0, Math.min(100, Number(parts[3]) || 0))
       next.push({ name: parts[1], cpu: processCpu, mem: processMem })
       root.processes = next.slice(0, 5)
@@ -296,7 +296,7 @@ BarWidget {
             }
 
             Text {
-              width: parent.width - usageText.implicitWidth - Style.space(11)
+              width: parent.width - usageText.implicitWidth - Style.space(18)
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.name
               color: root.bar.foreground
@@ -308,7 +308,9 @@ BarWidget {
             Text {
               id: usageText
               anchors.verticalCenter: parent.verticalCenter
-              text: modelData.cpu.toFixed(1) + "% CPU  " + modelData.mem.toFixed(1) + "% RAM"
+              text: modelData.cpu.toFixed(1) + "% CPU  "
+                + (modelData.cpu / 100).toFixed(1) + " cores  "
+                + modelData.mem.toFixed(1) + "% RAM"
               color: root.bar.foreground
               opacity: 0.6
               font.family: root.bar.fontFamily
