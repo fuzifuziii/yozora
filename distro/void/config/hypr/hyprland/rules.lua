@@ -3,11 +3,6 @@ hl.layer_rule({
 	no_screen_share = true,
 })
 
-hl.layer_rule({
-	match = { namespace = "selection" },
-	no_anim = true,
-})
-
 hl.window_rule({
 	match = {
 		class = ".*",
@@ -51,67 +46,6 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "^(jetbrains-.*)$",
-		title = "^(splash)$",
-		float = 1,
-	},
-	tag = "+jetbrains-splash",
-})
-
-hl.window_rule({
-	match = {
-		tag = "jetbrains-splash",
-	},
-	center = true,
-	no_focus = true,
-	border_size = 0,
-})
-
-hl.window_rule({
-	match = {
-		class = "^(jetbrains-.*)",
-		title = "^()$",
-		float = 1,
-	},
-	tag = "+jetbrains",
-})
-
-hl.window_rule({
-	match = {
-		tag = "jetbrains",
-	},
-	center = true,
-	stay_focused = true,
-	border_size = 0,
-})
-
-hl.window_rule({
-	match = {
-		class = "^(jetbrains-.*)",
-		title = "^()$",
-		float = 1,
-	},
-	min_size = "(monitor_w*0.5) (monitor_h*0.5)",
-})
-
-hl.window_rule({
-	match = {
-		class = "^(jetbrains-.*)$",
-		title = "^(win.*)$",
-		float = 1,
-	},
-	no_initial_focus = true,
-})
-
-hl.window_rule({
-	match = {
-		class = "^(jetbrains-.*)$",
-	},
-	no_follow_mouse = true,
-})
-
-hl.window_rule({
-	match = {
 		title = "(Picture.?in.?[Pp]icture)",
 	},
 	tag = "+pip",
@@ -140,7 +74,7 @@ hl.window_rule({
 
 hl.window_rule({
 	match = {
-		class = "(org.fuzi.nmtui|org.fuzi.bluetui|org.fuzi.impala|org.fuzi.wiremix|org.fuzi.btop|org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|About|TUI.float|imv|mpv|org.kde.gwenview|org.fuzi.playit)",
+		class = "(org.fuzi.terminal|org.fuzi.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|About|TUI.float|imv|mpv|org.kde.gwenview)",
 	},
 	tag = "+floating-window",
 })
