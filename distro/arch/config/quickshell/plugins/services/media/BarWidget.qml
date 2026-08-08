@@ -305,7 +305,7 @@ BarWidget {
   Timer {
     interval: 40
     repeat: true
-    running: root.activePlayer !== null
+    running: root.activePlayer && root.activePlayer.isPlaying
     onTriggered: root.recordAngle = (root.recordAngle + 2.4) % 360
   }
 
