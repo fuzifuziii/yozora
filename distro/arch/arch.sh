@@ -3,7 +3,7 @@
 set -e
 
 # Packages
-BASE_PKGS=(imagemagick base-devel)
+BASE_PKGS=(cava gum imagemagick base-devel)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(dkms nvidia-open-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libva-nvidia-driver opencl-nvidia libxnvctrl)
 PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)

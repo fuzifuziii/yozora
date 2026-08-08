@@ -30,7 +30,7 @@ profile_available() {
   [[ " ${profiles[*]} " == *" $1 "* ]]
 }
 
-state_dir="${FUZI_POWERPROFILES_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/share}/fuzi/powerprofiles}"
+state_dir="${FUZI_POWERPROFILES_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/share}/fuzi/config/powerprofiles}"
 state_file="$state_dir/$action"
 
 if [[ -n $requested_profile ]]; then

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Ui
 import qs.Commons
 
@@ -17,12 +18,28 @@ BarWidget {
   readonly property string artist: activePlayer ? (activePlayer.trackArtist || "") : ""
 
   property bool popupOpen: false
+  property var cavaLevels: []
+  property real recordAngle: 0
 
   function close() { popupOpen = false }
+  function updateCava(line) {
+    var values = String(line || "").trim().split(/[; ,]+/)
+    var next = []
+    for (var i = 0; i < values.length; i++) {
+      var value = Number(values[i])
+      if (!isNaN(value)) next.push(Math.max(0, Math.min(1, value / 100)))
+    }
+    if (next.length > 0) cavaLevels = next
+  }
+  function cavaLevel(index) {
+    if (!root.activePlayer || !root.activePlayer.isPlaying) return 0.12
+    return root.cavaLevels.length > index ? Math.min(1, root.cavaLevels[index] * 1.25) : 0.12
+  }
   property real maxLabelWidth: 180
+  readonly property real openPanelIndicatorWidth: button.glyphPaintedWidth
 
   visible: true
-  implicitWidth: Math.round(Style.bar.iconSlot * 1.35)
+  implicitWidth: Style.bar.iconSlot
   implicitHeight: barSize
 
   BarIconButton {
@@ -34,9 +51,7 @@ BarWidget {
     height: root.barSize
     bar: root.bar
     text: "󰝚"
-    foreground: "#ffffff"
-    useActiveColor: false
-     tooltipText: ""
+    tooltipText: ""
 
     onPressed: function(mouseButton) {
       if (mouseButton === Qt.MiddleButton) {
@@ -68,68 +83,89 @@ BarWidget {
       spacing: Style.space(10)
 
       Row {
-        spacing: Style.space(10)
+        id: visualizer
         width: parent.width
+        height: Style.space(100)
+        spacing: Style.space(28)
 
-        BorderSurface {
-          width: Style.space(64)
-          height: Style.space(64)
-          radius: Style.spacing.labelGap
-          color: Style.normalFillFor(root.bar.foreground, Color.accent)
-          borderSpec: Border.controlSpec("normal", root.bar.foreground, Color.accent)
+        Item {
+          id: record
+          width: Style.space(82)
+          height: width
+          anchors.verticalCenter: parent.verticalCenter
+          rotation: root.recordAngle
+          transform: Translate { x: Style.space(4) }
 
-          Image {
+          BorderSurface {
             anchors.fill: parent
-            anchors.margins: Style.space(2)
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            source: root.activePlayer && root.activePlayer.trackArtUrl ? root.activePlayer.trackArtUrl : ""
-            visible: source !== ""
-          }
+            radius: Style.spacing.labelGap
+            clip: true
+            color: "#161616"
+            borderSpec: Border.controlSpec("normal", root.bar.foreground, Color.accent)
 
-          Text {
-            anchors.centerIn: parent
-            visible: !root.activePlayer || !root.activePlayer.trackArtUrl
-            text: "󰝚"
-            color: root.bar.foreground
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.displayLarge
+            Image {
+              anchors.fill: parent
+              anchors.margins: Style.space(5)
+              source: root.activePlayer && root.activePlayer.trackArtUrl ? root.activePlayer.trackArtUrl : ""
+              fillMode: Image.PreserveAspectCrop
+              asynchronous: true
+              opacity: source !== "" ? 0.9 : 0
+            }
+
+            Repeater {
+              model: 4
+              Rectangle {
+                required property int index
+                width: parent.width - Style.space(16) - index * Style.space(12)
+                height: 1
+                radius: 1
+                anchors.centerIn: parent
+                rotation: index * 45
+                color: Util.alpha(root.bar.foreground, 0.18)
+              }
+            }
+
+            Rectangle {
+              anchors.centerIn: parent
+              width: Style.space(14)
+              height: width
+              radius: width / 2
+              color: root.bar.foreground
+              border.color: Color.accent
+              border.width: Style.space(2)
+            }
           }
         }
 
-        Column {
-          spacing: Style.space(4)
-          width: parent.width - Style.space(74)
+        Item {
+          id: visualizerInfo
+          width: parent.width - record.width - parent.spacing
+          height: parent.height
+          anchors.verticalCenter: parent.verticalCenter
 
-          Text {
-            text: root.title || "Nothing playing"
-            color: root.bar.foreground
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.subtitle
-            font.bold: true
-            elide: Text.ElideRight
+          Row {
+            id: spectrumRow
             width: parent.width
+            height: Style.space(52)
+            spacing: Style.space(4)
+            anchors.verticalCenter: parent.verticalCenter
+
+            Repeater {
+              model: 28
+
+              Rectangle {
+                required property int index
+                width: Math.max(2, Style.space(3))
+                height: Style.space(8) + root.cavaLevel(index) * Style.space(45)
+                anchors.verticalCenter: parent.verticalCenter
+                radius: width / 2
+                color: index % 4 === 0 ? Color.accent : root.bar.foreground
+                opacity: root.activePlayer && root.activePlayer.isPlaying ? 0.95 : 0.35
+
+              }
+            }
           }
 
-          Text {
-            text: root.artist
-            color: Qt.darker(root.bar.foreground, 1.3)
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.bodySmall
-            elide: Text.ElideRight
-            width: parent.width
-            visible: text !== ""
-          }
-
-          Text {
-            text: root.activePlayer && root.activePlayer.trackAlbum ? root.activePlayer.trackAlbum : ""
-            color: Qt.darker(root.bar.foreground, 1.6)
-            font.family: root.bar.fontFamily
-            font.pixelSize: Style.font.caption
-            elide: Text.ElideRight
-            width: parent.width
-            visible: text !== ""
-          }
         }
       }
 
@@ -139,9 +175,12 @@ BarWidget {
 
         Button {
           iconText: "󰒮"
+          width: Style.space(40)
+          height: Style.space(36)
           foreground: root.bar.foreground
+          bordered: true
           horizontalPadding: Style.spacing.controlPaddingX
-          verticalPadding: Style.spacing.controlPaddingY
+          verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
           enabled: root.activePlayer && root.activePlayer.canGoPrevious
           opacity: enabled ? 1.0 : 0.4
           onClicked: if (root.mediaService) root.mediaService.runAction("previous", false, root.mediaService.playerKey(root.activePlayer))
@@ -149,9 +188,12 @@ BarWidget {
 
         Button {
           iconText: root.activePlayer && root.activePlayer.isPlaying ? "󰏤" : "󰐊"
+          width: Style.space(40)
+          height: Style.space(36)
           foreground: root.bar.foreground
-          horizontalPadding: Style.spacing.panelGap
-          verticalPadding: Style.spacing.controlPaddingY
+          bordered: true
+          horizontalPadding: Style.spacing.controlPaddingX
+          verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
           iconSize: Style.font.iconLarge
           enabled: root.activePlayer && (root.activePlayer.canTogglePlaying || root.activePlayer.canPlay || root.activePlayer.canPause)
           opacity: enabled ? 1.0 : 0.4
@@ -160,9 +202,12 @@ BarWidget {
 
         Button {
           iconText: "󰒭"
+          width: Style.space(40)
+          height: Style.space(36)
           foreground: root.bar.foreground
+          bordered: true
           horizontalPadding: Style.spacing.controlPaddingX
-          verticalPadding: Style.spacing.controlPaddingY
+          verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
           enabled: root.activePlayer && root.activePlayer.canGoNext
           opacity: enabled ? 1.0 : 0.4
           onClicked: if (root.mediaService) root.mediaService.runAction("next", false, root.mediaService.playerKey(root.activePlayer))
@@ -197,7 +242,7 @@ BarWidget {
             height: sourceInner.implicitHeight + Style.space(10)
             radius: Style.spacing.labelGap
             color: selected ? Style.selectedFillFor(root.bar.foreground, Color.accent) : "transparent"
-            borderSpec: selected ? Border.controlSpec("normal", root.bar.foreground, Color.accent) : Border.none()
+            borderSpec: selected ? Border.controlSpec("selected", root.bar.foreground, Color.accent) : Border.none()
 
             Row {
               id: sourceInner
@@ -255,5 +300,26 @@ BarWidget {
         }
       }
     }
+  }
+
+  Timer {
+    interval: 40
+    repeat: true
+    running: root.activePlayer !== null
+    onTriggered: root.recordAngle = (root.recordAngle + 2.4) % 360
+  }
+
+  Connections {
+    target: root.activePlayer
+    function onIsPlayingChanged() {
+      if (!root.activePlayer || !root.activePlayer.isPlaying) root.cavaLevels = []
+    }
+  }
+
+  Process {
+    id: cavaProc
+    command: ["cava", "-p", Quickshell.env("FUZI_PATH") + "/config/cava/fuzi-media.conf"]
+    running: root.activePlayer && root.activePlayer.isPlaying
+    stdout: SplitParser { onRead: function(line) { root.updateCava(line) } }
   }
 }

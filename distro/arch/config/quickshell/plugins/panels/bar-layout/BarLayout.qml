@@ -12,6 +12,10 @@ Item {
   property string position: "top"
 
   function entryId(entry) { return typeof entry === "string" ? entry : (entry && entry.id ? String(entry.id) : "") }
+  function isTray(entry) { return entryId(entry) === "fuzi.tray" }
+  function canMoveUp(sectionIndex, itemIndex, entry) {
+    return !isTray(entry) && !(sectionIndex === 2 && itemIndex === 1)
+  }
   function label(id) {
     var names = ({"fuzi.workspaces":"Workspaces", "fuzi.weather":"Weather", "fuzi.clock":"Clock", "fuzi.media":"Media", "fuzi.keyboard-layout":"Keyboard", "fuzi.bluetooth":"Bluetooth", "fuzi.network":"Network", "fuzi.tray":"Tray", "fuzi.audio":"Audio", "fuzi.mihomo":"Mihomo", "fuzi.system-monitor":"System monitor", "fuzi.power":"Power", "fuzi.dnd":"Do not disturb"})
     return names[id] || id.replace(/^fuzi\./, "")
@@ -30,17 +34,29 @@ Item {
   function close() { opened = false }
   function copySections() { return sections.map(function(s) { return { id:s.id, title:s.title, entries:s.entries.slice() } }) }
   function save(next) {
+    var trayEntry = null
+    for (var i = 0; i < next.length; i++) {
+      var filtered = []
+      for (var j = 0; j < next[i].entries.length; j++) {
+        if (isTray(next[i].entries[j])) trayEntry = next[i].entries[j]
+        else filtered.push(next[i].entries[j])
+      }
+      next[i].entries = filtered
+    }
+    if (trayEntry) next[2].entries.unshift(trayEntry)
     sections = next
     if (shell && shell.mutateShellConfig) shell.mutateShellConfig(function(config) { config.bar.layout = {left:next[0].entries, center:next[1].entries, right:next[2].entries} })
   }
   function move(sectionIndex, itemIndex, delta) {
     var next = copySections(), list = next[sectionIndex].entries, target = itemIndex + delta
     if (target < 0 || target >= list.length) return
+    if (isTray(list[itemIndex]) || isTray(list[target])) return
     var value = list[itemIndex]; list[itemIndex] = list[target]; list[target] = value; save(next)
   }
   function transfer(sectionIndex, itemIndex, direction) {
     var next = copySections(), target = sectionIndex + direction
     if (target < 0 || target >= next.length) return
+    if (isTray(next[sectionIndex].entries[itemIndex])) return
     var value = next[sectionIndex].entries.splice(itemIndex, 1)[0]
     if (value) { next[target].entries.push(value); save(next) }
   }
@@ -150,10 +166,10 @@ Item {
                          verticalAlignment:Text.AlignVCenter
                          elide:Text.ElideRight
                        }
-                       Button { id:upButton; iconText:"󰁝"; tooltipText:"Move up"; foreground:Color.foreground; onClicked:root.move(sectionCard.sectionIndex, index, -1) }
-                      Button { id:downButton; iconText:"󰁅"; tooltipText:"Move down"; foreground:Color.foreground; onClicked:root.move(sectionCard.sectionIndex, index, 1) }
-                      Button { id:leftButton; iconText:"󰁍"; tooltipText:"Previous section"; foreground:Color.foreground; visible:sectionCard.sectionIndex > 0; onClicked:root.transfer(sectionCard.sectionIndex, index, -1) }
-                      Button { id:rightButton; iconText:"󰁔"; tooltipText:"Next section"; foreground:Color.foreground; visible:sectionCard.sectionIndex < 2; onClicked:root.transfer(sectionCard.sectionIndex, index, 1) }
+                        Button { id:upButton; iconText:"󰁝"; tooltipText:"Move up"; foreground:Color.foreground; visible:root.canMoveUp(sectionCard.sectionIndex, index, modelData); onClicked:root.move(sectionCard.sectionIndex, index, -1) }
+                       Button { id:downButton; iconText:"󰁅"; tooltipText:"Move down"; foreground:Color.foreground; visible:!root.isTray(modelData); onClicked:root.move(sectionCard.sectionIndex, index, 1) }
+                       Button { id:leftButton; iconText:"󰁍"; tooltipText:"Previous section"; foreground:Color.foreground; visible:sectionCard.sectionIndex > 0 && !root.isTray(modelData); onClicked:root.transfer(sectionCard.sectionIndex, index, -1) }
+                       Button { id:rightButton; iconText:"󰁔"; tooltipText:"Next section"; foreground:Color.foreground; visible:sectionCard.sectionIndex < 2 && !root.isTray(modelData); onClicked:root.transfer(sectionCard.sectionIndex, index, 1) }
                     }
                   }
                 }

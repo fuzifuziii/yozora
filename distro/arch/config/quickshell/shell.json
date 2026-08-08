@@ -12,8 +12,8 @@
           "id": "fuzi.weather"
         },
         {
-          "format": "dddd HH:mm",
-          "id": "fuzi.clock"
+          "id": "fuzi.clock",
+          "format": "dddd HH:mm"
         },
         {
           "id": "fuzi.media"

@@ -93,7 +93,7 @@ Panel {
   }
 
   property FileView locationFile: FileView {
-    path: Quickshell.env("HOME") + "/.local/share/fuzi/weather.json"
+    path: Quickshell.env("HOME") + "/.local/share/fuzi/config/weather.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()

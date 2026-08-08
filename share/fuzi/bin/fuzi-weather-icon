@@ -1,7 +1,7 @@
 #!/bin/bash
 
 query=""
-if [[ -s "$HOME/.local/share/fuzi/weather.json" ]]; then
+if [[ -s "$HOME/.local/share/fuzi/config/weather.json" ]]; then
   location=$(fuzi-weather-location 2>/dev/null)
   [[ -n $location ]] && query=$(jq -rn --arg location "$location" '$location | @uri')
 fi

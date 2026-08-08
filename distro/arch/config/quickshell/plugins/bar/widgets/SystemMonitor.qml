@@ -52,7 +52,9 @@ BarWidget {
     var parts = String(line || "").trim().split(/\s+/)
     if (parts[0] === "proc" && parts.length >= 4) {
       var next = root.processes.slice()
-      next.push({ name: parts[1], cpu: Number(parts[2]) || 0, mem: Number(parts[3]) || 0 })
+      var processCpu = Math.max(0, Math.min(100, Number(parts[2]) || 0))
+      var processMem = Math.max(0, Math.min(100, Number(parts[3]) || 0))
+      next.push({ name: parts[1], cpu: processCpu, mem: processMem })
       root.processes = next.slice(0, 5)
       return
     }

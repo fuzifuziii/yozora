@@ -17,7 +17,7 @@ Item {
   property bool clearConfirmOpen: false
   property var history: []
 
-  property string historyPath: Quickshell.env("HOME") + "/.local/share/fuzi/clipboard/clipboard-history.json"
+  property string historyPath: Quickshell.env("HOME") + "/.local/share/fuzi/config/clipboard/clipboard-history.json"
   readonly property string captureScript: String(Qt.resolvedUrl("capture.sh")).replace(/^file:\/\//, "")
   // Shares the [menu] surface tokens — themes that style the menu also
   // style the clipboard. Selected-row colors composed in the

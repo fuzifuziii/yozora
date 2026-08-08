@@ -22,7 +22,7 @@ Item {
   // History + DND live under XDG_STATE_HOME: they're persistent user state
   // (history of received notifications, last-set DND preference), not
   // regeneratable cache that a `rm -rf ~/.cache` should wipe.
-  readonly property string stateDir: home + "/.local/share/fuzi/"
+  readonly property string stateDir: home + "/.local/share/fuzi/config/"
   readonly property string historyPath: stateDir + "notifications.json"
   // Thumbnails copied from /tmp screenshots are genuinely disposable — if
   // they vanish the row just renders without an image — so they stay in

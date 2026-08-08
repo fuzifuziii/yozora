@@ -6,7 +6,7 @@
 
 set -o pipefail
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/share/fuzi}/clipboard"
+STATE_DIR="$HOME/.local/share/fuzi/config/clipboard"
 IMAGE_DIR="$STATE_DIR/clipboard-images"
 mkdir -p "$IMAGE_DIR"
 

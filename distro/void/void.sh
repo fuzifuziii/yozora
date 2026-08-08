@@ -3,7 +3,7 @@
 set -e
 
 # Packages
-BASE_PKGS=(ImageMagick python3-dbus-next wl-clipboard wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
+BASE_PKGS=(cava gum ImageMagick python3-dbus-next wl-clipboard wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
