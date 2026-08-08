@@ -215,13 +215,13 @@ BarWidget {
       }
 
       PanelSeparator {
-        visible: root.sourcePlayers.length > 1
+        visible: root.sourcePlayers.length > 0
         foreground: root.bar.foreground
       }
 
       Column {
         id: sourceList
-        visible: root.sourcePlayers.length > 1
+        visible: root.sourcePlayers.length > 0
         width: parent.width
         spacing: Style.space(4)
 
