@@ -385,10 +385,40 @@ i_yozora() {
   i_dbus
   e_nm
 
+    if [[ -d /etc/sv/power-profiles-daemon ]]; then
+      if [[ -L /var/service/power-profiles-daemon ]]; then
+        echo -e "${YELLOW}power-profiles-daemon is already enabled, skipping${NC}"
+      else
+        sudo ln -sf /etc/sv/power-profiles-daemon /var/service/ || echo -e "${RED}Failed to enable power-profiles-daemon service${NC}"
+      fi
+    else
+      echo -e "${YELLOW}power-profiles-daemon service dir not found, skipping${NC}"
+    fi
+  fi
+
+    if [[ -d /etc/sv/mihomo ]]; then
+      if [[ -L /var/service/mihomo ]]; then
+        echo -e "${YELLOW}mihomo is already enabled, skipping${NC}"
+      else
+        sudo ln -sf /etc/sv/mihomo /var/service/ || echo -e "${RED}Failed to enable mihomo service${NC}"
+      fi
+    else
+      echo -e "${YELLOW}mihomo service dir not found, skipping${NC}"
+    fi
+  fi
+
+    if [[ -d /usr/share/icons/Adwaita ]]; then
+      mkdir -p ~/.icons
+      if [[ -L ~/.icons/default ]]; then
+        echo -e "${YELLOW}default icon theme already linked, skipping${NC}"
+      else
+        ln -sf /usr/share/icons/Adwaita ~/.icons/default || echo -e "${RED}Failed to link default icon theme${NC}"
+      fi
+    else
+      echo -e "${YELLOW}Adwaita icons not found, skipping${NC}"
+    fi
+
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
-  mkdir -p ~/.icons && sudo ln -sf /usr/share/icons/Adwaita ~/.icons/default
-  sudo ln -sf /etc/sv/power-profiles-daemon /var/service/
-  sudo ln -sf /etc/sv/mihomo /var/service/
 
   echo -e "\n${GREEN}=== Installation completed successfully! ===${NC}"
 }
