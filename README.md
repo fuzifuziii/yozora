@@ -14,7 +14,7 @@
 ## Installation
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/main/bootstrap.sh)" -- --update
+wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/main/bootstrap.sh | bash
 ```
 
 ## Basic binds
