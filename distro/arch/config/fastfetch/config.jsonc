@@ -9,7 +9,6 @@
       "right": 6,
       "top": 2
     },
-    "type": "kitty"
   },
   "modules": [
     "break",
@@ -71,7 +70,7 @@
     {
       "key": "│ ├󰔫",
       "keyColor": "blue",
-      "text": "echo \"Yozora 2.4\"",
+      "text": "echo \"Yozora $(cat ~/.local/share/fuzi/version.txt)\"",
       "type": "command"
     },
     {

@@ -323,7 +323,7 @@ BarWidget {
         ToggleSwitch {
           checked: root.tunEnabled
           foreground: root.bar.foreground
-          onToggled: root.setTun(checked)
+          onToggled: root.setTun(!root.tunEnabled)
 
           PanelToolTip {
             visible: parent.containsMouse
