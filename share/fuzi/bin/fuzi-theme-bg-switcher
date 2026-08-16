@@ -1,7 +1,0 @@
-#!/bin/bash
-
-current_background=$(readlink -f "$HOME/.local/share/fuzi/background" 2>/dev/null)
-
-fuzi-menu-images \
-  --selected "$current_background" \
-  "$HOME/.local/share/fuzi/wallpaper"
