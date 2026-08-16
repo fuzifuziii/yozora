@@ -14,7 +14,7 @@
 ## Installation
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/main/bootstrap.sh | bash
+wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/dev/bootstrap.sh | bash
 ```
 
 ## Basic binds
