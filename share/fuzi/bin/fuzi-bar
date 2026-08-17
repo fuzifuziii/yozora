@@ -1,0 +1,288 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SHELL_JSON="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/shell.json"
+DEFAULTS_JSON="${FUZI_PATH:-}/config/quickshell/shell.json"
+
+fail() {
+  echo "fuzi-bar: $*" >&2
+  exit 1
+}
+
+resolve_source() {
+  if [[ -s $SHELL_JSON ]]; then
+    printf '%s\n' "$SHELL_JSON"
+  elif [[ -n ${FUZI_PATH:-} && -s $DEFAULTS_JSON ]]; then
+    printf '%s\n' "$DEFAULTS_JSON"
+  elif [[ -s /usr/share/fuzi/config/quickshell/shell.json ]]; then
+    printf '%s\n' /usr/share/fuzi/config/quickshell/shell.json
+  else
+    fail "shell.json not found (expected $SHELL_JSON)"
+  fi
+}
+
+reload_shell() {
+  if command -v fuzi-shell >/dev/null 2>&1; then
+    fuzi-shell shell reloadConfig >/dev/null 2>&1 ||
+      fuzi-shell -q shell rescanPlugins >/dev/null 2>&1 ||
+      true
+  fi
+}
+
+# All mutations go through one python helper so layout stays consistent.
+py_bar() {
+  local op="$1"
+  shift
+  local src
+  src=$(resolve_source)
+  mkdir -p "$(dirname "$SHELL_JSON")"
+  python3 - "$op" "$src" "$SHELL_JSON" "$@" <<'PY'
+import json, sys, os
+
+op, src, dest = sys.argv[1], sys.argv[2], sys.argv[3]
+args = sys.argv[4:]
+
+def load(path):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("version", 1)
+    bar = data.setdefault("bar", {})
+    if not isinstance(bar, dict):
+        bar = {}
+        data["bar"] = bar
+    layout = bar.setdefault("layout", {})
+    if not isinstance(layout, dict):
+        layout = {}
+        bar["layout"] = layout
+    for sec in ("left", "center", "right"):
+        if not isinstance(layout.get(sec), list):
+            layout[sec] = []
+    data.setdefault("plugins", [])
+    return data
+
+def eid(entry):
+    if isinstance(entry, str):
+        return entry
+    if isinstance(entry, dict):
+        return str(entry.get("id") or "")
+    return ""
+
+def find_entry(layout, mid):
+    for sec in ("left", "center", "right"):
+        for e in layout[sec]:
+            if eid(e) == mid:
+                return e, sec
+    return None, None
+
+def strip(layout, mid):
+    for sec in ("left", "center", "right"):
+        layout[sec] = [e for e in layout[sec] if eid(e) != mid]
+
+def save(data, path):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False, sort_keys=True)
+        f.write("\n")
+    os.replace(tmp, path)
+
+LABELS = {
+    "fuzi.workspaces": "Workspaces",
+    "fuzi.weather": "Weather",
+    "fuzi.clock": "Clock",
+    "fuzi.media": "Media",
+    "fuzi.keyboard-layout": "Keyboard",
+    "fuzi.bluetooth": "Bluetooth",
+    "fuzi.mihomo": "Mihomo",
+    "fuzi.network": "Network",
+    "fuzi.tray": "Tray",
+    "fuzi.audio": "Audio",
+    "fuzi.system-monitor": "System monitor",
+    "fuzi.power": "Power",
+    "fuzi.dnd": "Do not disturb",
+    "fuzi.active-window": "Active window",
+    "fuzi.microphone": "Microphone",
+    "fuzi.spacer": "Spacer",
+}
+
+def label(mid):
+    return LABELS.get(mid, mid.replace("fuzi.", ""))
+
+data = load(src)
+bar = data["bar"]
+layout = bar["layout"]
+
+if op == "show":
+    print(f"position: {bar.get('position', 'top')}")
+    for sec in ("left", "center", "right"):
+        print(f"{sec}:")
+        for e in layout[sec]:
+            mid = eid(e)
+            if mid:
+                print(f"  {label(mid)}  ({mid})")
+    sys.exit(0)
+
+if op == "position":
+    pos = args[0]
+    if pos not in ("top", "bottom", "left", "right"):
+        print("fuzi-bar: position must be top|bottom|left|right", file=sys.stderr)
+        sys.exit(2)
+    bar["position"] = pos
+    save(data, dest)
+    print(f"bar position → {pos}")
+    sys.exit(0)
+
+if op == "move":
+    mid, section = args[0], args[1]
+    if section not in ("left", "center", "right"):
+        print("fuzi-bar: section must be left|center|right", file=sys.stderr)
+        sys.exit(2)
+    entry, _ = find_entry(layout, mid)
+    if entry is None:
+        entry = {"id": mid}
+    strip(layout, mid)
+    if section == "center":
+        anchor = str(bar.get("centerAnchor") or "")
+        anchor_index = next((i for i, item in enumerate(layout[section]) if eid(item) == anchor), -1)
+        if anchor_index >= 0 and mid != anchor:
+            layout[section].insert(anchor_index, entry)
+        else:
+            layout[section].append(entry)
+    else:
+        layout[section].append(entry)
+    save(data, dest)
+    print(f"moved {label(mid)} → {section}")
+    sys.exit(0)
+
+if op == "hide":
+    mid = args[0]
+    strip(layout, mid)
+    save(data, dest)
+    print(f"hid {label(mid)}")
+    sys.exit(0)
+
+if op == "shift":
+    mid, direction = args[0], args[1]
+    direction = direction.lower()
+    delta = -1 if direction in ("earlier", "left", "-1", "up") else 1 if direction in ("later", "right", "+1", "down") else None
+    if delta is None:
+        print("fuzi-bar: shift direction must be earlier|later", file=sys.stderr)
+        sys.exit(2)
+    entry, sec = find_entry(layout, mid)
+    if entry is None or sec is None:
+        print(f"fuzi-bar: {mid} is not on the bar", file=sys.stderr)
+        sys.exit(1)
+    arr = layout[sec]
+    idx = next(i for i, e in enumerate(arr) if eid(e) == mid)
+    j = idx + delta
+    if 0 <= j < len(arr):
+        arr[idx], arr[j] = arr[j], arr[idx]
+        save(data, dest)
+        print(f"shifted {label(mid)} in {sec}")
+    else:
+        print(f"fuzi-bar: already at the edge of {sec}", file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+
+if op == "section":
+    mid = args[0]
+    _, sec = find_entry(layout, mid)
+    print(sec or "")
+    sys.exit(0)
+
+print(f"fuzi-bar: unknown op {op}", file=sys.stderr)
+sys.exit(2)
+PY
+  reload_shell
+}
+
+label_of() {
+  case "$1" in
+  fuzi.workspaces) echo "Workspaces" ;;
+  fuzi.weather) echo "Weather" ;;
+  fuzi.clock) echo "Clock" ;;
+  fuzi.media) echo "Media" ;;
+  fuzi.keyboard-layout) echo "Keyboard" ;;
+  fuzi.bluetooth) echo "Bluetooth" ;;
+  fuzi.mihomo) echo "Mihomo" ;;
+  fuzi.network) echo "Network" ;;
+  fuzi.tray) echo "Tray" ;;
+  fuzi.audio) echo "Audio" ;;
+  fuzi.system-monitor) echo "System monitor" ;;
+  fuzi.power) echo "Power" ;;
+  fuzi.dnd) echo "Do not disturb" ;;
+  fuzi.active-window) echo "Active window" ;;
+  *) echo "${1#fuzi.}" ;;
+  esac
+}
+
+place() {
+  local id="$1"
+  [[ -n $id ]] || fail "place requires a module id"
+  if ! command -v fuzi-menu-select >/dev/null 2>&1; then
+    fail "fuzi-menu-select not found; use: fuzi-bar move|shift|hide"
+  fi
+  local name sec prompt choice
+  name=$(label_of "$id")
+  sec=$(py_bar section "$id" || true)
+  prompt="Place $name"
+  [[ -n $sec ]] && prompt="$prompt (now: $sec)"
+
+  choice=$(fuzi-menu-select "$prompt" \
+    $'󰁍\tLeft' \
+    $'󰁥\tCenter' \
+    $'󰁔\tRight' \
+    $'󰁍\tEarlier' \
+    $'󰁔\tLater' \
+    $'󰅖\tHide' \
+    -- --width 280) || exit 1
+
+  case "$choice" in
+  Left) py_bar move "$id" left ;;
+  Center) py_bar move "$id" center ;;
+  Right) py_bar move "$id" right ;;
+  Earlier) py_bar shift "$id" earlier ;;
+  Later) py_bar shift "$id" later ;;
+  Hide) py_bar hide "$id" ;;
+  *) fail "unknown choice: $choice" ;;
+  esac
+}
+
+cmd="${1-show}"
+case "$cmd" in
+layout | gui)
+  quickshell ipc call bar-layout open >/dev/null
+  ;;
+show | status | get | "")
+  py_bar show
+  ;;
+position)
+  py_bar position "${2-}"
+  ;;
+modules | list)
+  py_bar show
+  ;;
+move)
+  py_bar move "${2-}" "${3-}"
+  ;;
+shift)
+  py_bar shift "${2-}" "${3-}"
+  ;;
+hide)
+  py_bar hide "${2-}"
+  ;;
+show-module)
+  py_bar move "${2-}" "${3:-right}"
+  ;;
+place)
+  place "${2-}"
+  ;;
+-h | --help | help)
+  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  ;;
+*)
+  fail "unknown command '$cmd'"
+  ;;
+esac

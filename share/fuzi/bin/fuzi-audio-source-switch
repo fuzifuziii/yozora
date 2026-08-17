@@ -1,0 +1,16 @@
+#!/bin/bash
+
+direction="${1:-next}"
+
+case "$direction" in
+next)
+  fuzi-shell media sourceSwitch
+  ;;
+previous)
+  fuzi-shell media sourceSwitchPrevious
+  ;;
+*)
+  echo "Usage: fuzi-audio-source-switch [next|previous]" >&2
+  exit 1
+  ;;
+esac

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -euo pipefail
+
+verb="${1-toggle}"
+route="${2-root}"
+
+menu_payload() {
+  perl -MEncode=decode -MJSON::PP=encode_json -e 'print encode_json({ menu => decode("UTF-8", $ARGV[0]) })' "$1"
+}
+
+case "$verb" in
+toggle)
+  if [[ $(fuzi-shell shell isOpen fuzi.menu 2>/dev/null || true) == "true" ]]; then
+    exec fuzi-shell shell hide fuzi.menu
+  fi
+  exec fuzi-shell shell summon fuzi.menu "$(menu_payload "$route")"
+  ;;
+summon)
+  exec fuzi-shell shell summon fuzi.menu "$(menu_payload "$route")"
+  ;;
+close)
+  exec fuzi-shell shell hide fuzi.menu
+  ;;
+refresh | ping)
+  exec fuzi-shell shell call fuzi.menu "$verb" "{}"
+  ;;
+-h | --help | help)
+  cat <<USAGE
+Usage: fuzi menu [verb] [route]
+
+Verbs:
+  toggle [route]   Open the menu at <route>, or close it if already open. Default verb.
+  summon [route]   Always open the menu (no close-if-visible toggle).
+  close            Close the menu if it is visible.
+  refresh          Re-parse the menu JSONC files.
+  ping             Health check.
+
+Route is an item id (e.g. setup.power) or alias (e.g. power). Defaults to
+"root", which opens the top-level menu.
+USAGE
+  exit 0
+  ;;
+*)
+  echo "fuzi-menu: unknown verb '$verb'. Try 'fuzi menu --help'." >&2
+  exit 2
+  ;;
+esac

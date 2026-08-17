@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if [[ $(fuzi-shell shell isOpen fuzi.menu 2>/dev/null || true) == "true" ]]; then
+  exec fuzi-shell shell hide fuzi.menu
+fi
+exec fuzi-shell shell summon fuzi.menu '{"menu":"applications"}'

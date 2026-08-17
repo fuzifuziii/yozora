@@ -14,8 +14,10 @@
 ## Installation
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/dev/bootstrap.sh | bash
+wget -qO- https://raw.githubusercontent.com/fuzifuziii/yozora/main/bootstrap.sh | bash
 ```
+
+The installer will ask whether to install the stable `main` or development `dev` branch.
 
 ## Basic binds
 

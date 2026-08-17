@@ -1,0 +1,3 @@
+#!/bin/bash
+
+fuzi-shell shell toggle fuzi.weather

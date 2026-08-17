@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cmd="$*"
+exec setsid xdg-terminal-exec --app-id=org.fuzi.terminal --title=fuzi -e bash -c "fuzi-show-logo; $cmd; fuzi-show-done"
