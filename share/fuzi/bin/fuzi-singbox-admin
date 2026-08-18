@@ -1,0 +1,131 @@
+#!/usr/bin/python3
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import urllib.request
+from urllib.parse import quote
+from urllib.error import URLError
+
+CONFIG = "/etc/sing-box/config.json"
+STATE = "/var/lib/sing-box/fuzi-vpn-enabled"
+
+
+def service_manager():
+    if shutil.which("systemctl"):
+        return "systemctl"
+    if shutil.which("sv"):
+        return "sv"
+    raise SystemExit("no supported service manager found")
+
+
+def service_status():
+    if not read_enabled_state():
+        return "inactive"
+
+    manager = service_manager()
+    if manager == "systemctl":
+        result = subprocess.run(["systemctl", "is-active", "sing-box"], check=False, capture_output=True, text=True)
+        return "active" if result.stdout.strip() == "active" else "inactive"
+
+    result = subprocess.run(["sv", "status", "sing-box"], check=False, capture_output=True, text=True)
+    output = (result.stdout or result.stderr or "").strip()
+    if output.startswith("run:"):
+        return "active"
+    if output.startswith("down:"):
+        return "inactive"
+    return "inactive"
+
+
+def read_enabled_state():
+    try:
+        with open(STATE, encoding="utf-8") as stream:
+            return stream.read().strip() == "1"
+    except FileNotFoundError:
+        return False
+
+
+def write_enabled_state(enabled):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE, "w", encoding="utf-8") as stream:
+        stream.write("1\n" if enabled else "0\n")
+
+
+def run_service(action):
+    manager = service_manager()
+    if manager == "systemctl":
+        subprocess.run(["systemctl", action, "sing-box"], check=True)
+        return
+    subprocess.run(["sv", action, "sing-box"], check=True)
+
+
+def write_config(payload):
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise SystemExit("config URL must return sing-box JSON; this looks like a non-JSON subscription") from exc
+    if not isinstance(data, dict):
+        raise SystemExit("sing-box config must be a JSON object")
+
+    os.makedirs(os.path.dirname(CONFIG), exist_ok=True)
+    fd, temp = tempfile.mkstemp(prefix="sing-box-config-", dir=os.path.dirname(CONFIG))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(data, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+        os.chmod(temp, 0o644)
+        os.replace(temp, CONFIG)
+    finally:
+        if os.path.exists(temp):
+            os.unlink(temp)
+
+
+def apply_url(url):
+    if not url or any(char in url for char in "\r\n\t"):
+        raise SystemExit("invalid config URL")
+
+    converter_base = os.environ.get("FUZI_SUBCONVERTER_URL", "http://127.0.0.1:25500").rstrip("/")
+    converted_url = f"{converter_base}/sub?target=sing-box&url={quote(url, safe='')}"
+
+    try:
+        with urllib.request.urlopen(converted_url, timeout=60) as response:
+            payload = response.read().decode("utf-8")
+    except (URLError, UnicodeDecodeError) as exc:
+        raise SystemExit(f"failed to download converted config: {exc}") from exc
+
+    write_config(payload)
+    run_service("restart")
+    write_enabled_state(True)
+
+
+def main():
+    if len(sys.argv) < 2:
+        raise SystemExit("usage: fuzi-singbox-admin status|start|stop|restart|url URL")
+
+    action = sys.argv[1]
+    if action == "status":
+        print(service_status())
+        return
+
+    if os.geteuid() != 0:
+        raise SystemExit("must be run through pkexec")
+
+    if action in {"start", "stop", "restart"}:
+        run_service(action)
+        if action == "start":
+            write_enabled_state(True)
+        elif action == "stop":
+            write_enabled_state(False)
+    elif action == "url":
+        if len(sys.argv) != 3:
+            raise SystemExit("usage: fuzi-singbox-admin url URL")
+        apply_url(sys.argv[2])
+    else:
+        raise SystemExit("unknown action")
+
+
+if __name__ == "__main__":
+    main()

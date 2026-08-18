@@ -39,15 +39,27 @@ detect_distro() {
 select_branch() {
   local choice
 
+  if [[ ! -r /dev/tty ]]; then
+    log_err "No TTY available to prompt for a channel; defaulting to main"
+    SELECTED_BRANCH="main"
+    return
+  fi
+
   while true; do
-    echo "Select release channel:"
-    echo "  1) main"
-    echo "  2) dev"
-    read -r -p "Choice [1-2]: " choice
+    echo "Select release channel:" >/dev/tty
+    echo "  1) main" >/dev/tty
+    echo "  2) dev" >/dev/tty
+    read -r -p "Choice [1-2]: " choice </dev/tty
 
     case "$choice" in
-    1 | main) SELECTED_BRANCH="main"; return ;;
-    2 | dev) SELECTED_BRANCH="dev"; return ;;
+    1 | main)
+      SELECTED_BRANCH="main"
+      return
+      ;;
+    2 | dev)
+      SELECTED_BRANCH="dev"
+      return
+      ;;
     *) log_err "Enter 1 (main) or 2 (dev)" ;;
     esac
   done
@@ -96,7 +108,7 @@ main() {
   fi
 
   log_ok "Running $script_path"
-  bash "$script_path" "$@"
+  bash "$script_path" "$@" </dev/tty
 }
 
 main "$@"

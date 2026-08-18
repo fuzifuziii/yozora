@@ -70,6 +70,7 @@ BarWidget {
     bar: root.bar
     text: panelLoader.item ? panelLoader.item.label : ""
     slotSize: Style.bar.statusSlot
+    verticalPadding: 9
     active: panelLoader.item && panelLoader.item.klass === "active"
     // Tooltip suppressed because the panel is the detail view.
     tooltipText: ""

@@ -9,7 +9,7 @@ NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-ope
 PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
 
-XBPS_PKGS=(NetworkManager elogind iwd xtools-minimal sddm dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
+XBPS_PKGS=(NetworkManager elogind xtools-minimal ly dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
 SRC_PKGS=(mihomo tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
@@ -411,8 +411,8 @@ i_yozora() {
   apply_tokyonight_colorscheme
 
   echo
-  log_info "Enabling SDDM display manager..."
-  enable_service sddm
+  log_info "Enabling LY display manager..."
+  enable_service ly
   enable_service dbus
 
   i_dbus

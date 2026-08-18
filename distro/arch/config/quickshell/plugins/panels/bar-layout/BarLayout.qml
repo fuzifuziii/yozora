@@ -17,7 +17,7 @@ Item {
     return !isTray(entry) && !(sectionIndex === 2 && itemIndex === 1)
   }
   function label(id) {
-    var names = ({"fuzi.workspaces":"Workspaces", "fuzi.weather":"Weather", "fuzi.clock":"Clock", "fuzi.media":"Media", "fuzi.keyboard-layout":"Keyboard", "fuzi.bluetooth":"Bluetooth", "fuzi.network":"Network", "fuzi.tray":"Tray", "fuzi.audio":"Audio", "fuzi.mihomo":"Mihomo", "fuzi.system-monitor":"System monitor", "fuzi.power":"Power", "fuzi.dnd":"Do not disturb"})
+    var names = ({"fuzi.workspaces":"Workspaces", "fuzi.weather":"Weather", "fuzi.clock":"Clock", "fuzi.media":"Media", "fuzi.keyboard-layout":"Keyboard", "fuzi.bluetooth":"Bluetooth", "fuzi.network":"Network", "fuzi.tray":"Tray", "fuzi.audio":"Audio", "fuzi.system-monitor":"System monitor", "fuzi.power":"Power", "fuzi.dnd":"Do not disturb"})
     return names[id] || id.replace(/^fuzi\./, "")
   }
   function readLayout() {

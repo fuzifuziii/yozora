@@ -3,16 +3,16 @@
 set -e
 
 # Packages
-BASE_PKGS=(cava gum imagemagick base-devel)
+BASE_PKGS=(python-gobject power-profiles-daemon wl-clipboard wl-clip-persist cava gum imagemagick base-devel)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(dkms nvidia-open-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libva-nvidia-driver opencl-nvidia libxnvctrl)
 PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)
 OTHER_PKGS=(xone-dkms)
 
 # Packages for Yozora
-PACMAN_PKGS=(sddm dolphin fastfetch fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq)
+PACMAN_PKGS=(ly dolphin fastfetch fish hyprland hyprpicker xdg-desktop-portal-hyprland kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq)
 FONTS_PKGS=(noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-jetbrains-mono-nerd)
-AUR_PKGS=(mihomo hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
+AUR_PKGS=(hyprland-preview-share-picker-git wayfreeze-git tokyonight-gtk-theme-git xdg-terminal-exec)
 
 # Logging helpers
 log_info() { echo -e "${BLUE}$*${NC}"; }
@@ -107,6 +107,9 @@ set_fish_default_shell() {
 }
 
 apply_tokyonight_colorscheme() {
+  mkdir -p "$HOME/.local/share/color-schemes"
+  cp TokyoNight.colors $HOME/.local/share/color-schemes/
+
   if command -v plasma-apply-colorscheme &>/dev/null; then
     plasma-apply-colorscheme TokyoNight || true
   else
@@ -205,16 +208,11 @@ i_yozora() {
   apply_tokyonight_colorscheme
 
   echo
-  log_info "Enabling SDDM display manager..."
-  enable_service sddm false
+  log_info "Enabling LY display manager..."
+  enable_service ly@tty2.service
+
   gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
-
   enable_service power-profiles-daemon
-  enable_service mihomo
-
-  if command -v elephant &>/dev/null; then
-    elephant service enable || true
-  fi
 
   echo
   log_ok "=== Installation completed successfully! ==="
