@@ -83,7 +83,7 @@ PanelWindow {
   exclusionMode: ExclusionMode.Ignore
 
   WlrLayershell.namespace: "fuzi-keyboard-panel"
-  WlrLayershell.layer: WlrLayer.Overlay
+  WlrLayershell.layer: WlrLayer.Top
   // Keyboard focus follows `open` (NOT `visible`). The window remains
   // mapped during the fade-out so the opacity animation has something to
   // animate, but keyboard/click ownership must release the moment the
