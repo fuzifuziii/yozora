@@ -51,6 +51,14 @@ BarWidget {
         Layout.fillWidth: true
         spacing: Style.spacing.rowPaddingX
 
+        Text {
+          text: "󰂚"
+          color: Color.foreground
+          font.family: root.bar ? root.bar.fontFamily : Style.font.family
+          font.pixelSize: Style.font.display
+          Layout.alignment: Qt.AlignVCenter
+        }
+
         ColumnLayout {
           Layout.fillWidth: true
           spacing: Style.space(2)
@@ -76,14 +84,18 @@ BarWidget {
         spacing: Style.space(4)
         Button {
           Layout.fillWidth: true
+          iconText: "󰂚"
           text: "Unread" + (root.notificationService ? " (" + root.notificationService.pendingModel.count + ")" : "")
           selected: root.showPending
+          bordered: true
           onClicked: root.showPending = true
         }
         Button {
           Layout.fillWidth: true
+          iconText: "󰋚"
           text: "History" + (root.notificationService ? " (" + root.notificationService.pastModel.count + ")" : "")
           selected: !root.showPending
+          bordered: true
           onClicked: root.showPending = false
         }
       }
