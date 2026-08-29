@@ -567,6 +567,10 @@ QtObject {
     // `fuzi.*` namespace is reserved for built-ins, including bar widgets
     // registered outside the manifest-based plugin registry.
     for (var tk in thirdParty) {
+      // When the bundled first-party tree is itself the active shell config,
+      // both scans see the exact same manifest. It is not a user plugin trying
+      // to shadow a reserved id, so merge it silently.
+      if (firstParty[tk] && firstParty[tk].__sourceDir === thirdParty[tk].__sourceDir) continue
       if (firstParty[tk] || String(tk).indexOf("fuzi.") === 0) {
         console.warn("PluginRegistry: plugin " + tk
           + " rejected: id is reserved for first-party Fuzi plugins")
