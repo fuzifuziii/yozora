@@ -108,6 +108,8 @@ Panel {
   property var displayAudioSinks: []
   property var displayAudioSources: []
   property var displayAudioStreams: []
+  property var audioProfileCards: []
+  property bool showDeviceModes: true
 
   // A DSP sink -- a speaker tuning, or EasyEffects -- can be the selected output
   // without being where loudness lives: changing its volume alters the level going
@@ -147,6 +149,18 @@ Panel {
   readonly property bool outputMuted: volumeSink && volumeSink.audio ? volumeSink.audio.muted : false
   readonly property real inputVolume: source && source.audio ? source.audio.volume : 0
   readonly property bool inputMuted: source && source.audio ? source.audio.muted : false
+  // Capture streams are PipeWire source streams (not playback sinks). This is
+  // the same signal the standalone microphone widget used for its active mark.
+  readonly property var activeCaptureStreams: {
+    var list = []
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i]
+      if (node && node.isStream && node.isSink === false && node.audio && !node.audio.muted)
+        list.push(node)
+    }
+    return list
+  }
+  readonly property bool inputInUse: activeCaptureStreams.length > 0 && !inputMuted
 
   onRawAudioSinksChanged: if (rawAudioSinks.length > 0) cachedAudioSinks = rawAudioSinks
   onRawAudioSourcesChanged: if (rawAudioSources.length > 0) cachedAudioSources = rawAudioSources
@@ -310,6 +324,7 @@ Panel {
   onOpenedChanged: {
     if (opened) {
       refreshDisplayAudioModels()
+      refreshAudioProfiles()
       focusSection = "output"
       selectedIndex = -1  // first keyboard cursor reveal starts on the output slider
       cursorActive = false
@@ -346,6 +361,16 @@ Panel {
     displayAudioSinks = []
     displayAudioSources = []
     displayAudioStreams = []
+  }
+
+  function refreshAudioProfiles() {
+    if (!audioProfilesProc.running) audioProfilesProc.running = true
+  }
+
+  function setAudioProfile(cardName, profileName) {
+    if (!cardName || !profileName || profileActionProc.running) return
+    profileActionProc.command = ["pactl", "set-card-profile", cardName, profileName]
+    profileActionProc.running = true
   }
 
   // Keep the keyboard-focused row inside the visible viewport of the
@@ -580,9 +605,7 @@ Panel {
   PwNodePeakMonitor {
     id: inputPeakMonitor
     node: root.source
-    // Peak monitoring creates a PipeWire capture stream. On this setup that
-    // stream makes PipeWire disconnect when the panel opens.
-    enabled: false
+    enabled: true
   }
 
   Process {
@@ -601,6 +624,27 @@ Panel {
       waitForEnd: true
       onStreamFinished: root.volumeSinkName = String(text).trim()
     }
+  }
+
+  Process {
+    id: audioProfilesProc
+    command: ["pactl", "-f", "json", "list", "cards"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.audioProfileCards = Model.parseAudioProfileCards(text)
+    }
+  }
+
+  Process {
+    id: profileActionProc
+    onExited: root.refreshAudioProfiles()
+  }
+
+  Timer {
+    interval: 3000
+    running: root.opened
+    repeat: true
+    onTriggered: root.refreshAudioProfiles()
   }
 
   Timer {
@@ -875,7 +919,7 @@ Panel {
 
             Item {
               width: parent.width
-              implicitHeight: Math.max(microphoneHeader.implicitHeight, microphonePercent.implicitHeight)
+              implicitHeight: Math.max(microphoneHeader.implicitHeight, microphonePercent.implicitHeight, microphoneInUse.implicitHeight)
 
               PanelSectionHeader {
                 id: microphoneHeader
@@ -893,10 +937,24 @@ Panel {
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.caption
                 font.bold: true
-                anchors.right: parent.right
+                anchors.right: microphoneInUse.visible ? microphoneInUse.left : parent.right
                 anchors.rightMargin: Style.space(6)
                 anchors.verticalCenter: parent.verticalCenter
                 opacity: root.inputMuted ? 0.5 : 1.0
+              }
+
+              Text {
+                id: microphoneInUse
+                visible: root.inputInUse
+                text: "IN USE"
+                color: root.bar.foreground
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.caption
+                font.bold: true
+                font.letterSpacing: 1.2
+                anchors.right: parent.right
+                anchors.rightMargin: Style.space(6)
+                anchors.verticalCenter: parent.verticalCenter
               }
             }
 
@@ -969,16 +1027,167 @@ Panel {
             }
           }
 
+          // ---- Device mode / sources tabs ----
+          Row {
+            visible: root.audioProfileCards.length > 0 || root.displayAudioStreams.length > 0
+            width: parent.width
+            spacing: Style.space(6)
+
+            Button {
+              width: (parent.width - parent.spacing) / 2
+              iconText: "󰋋"
+              text: "Device mode"
+              selected: root.showDeviceModes
+              bordered: true
+              foreground: root.bar.foreground
+              fontFamily: root.bar.fontFamily
+              fontSize: Style.font.bodySmall
+              verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+              onClicked: root.showDeviceModes = true
+            }
+            Button {
+              width: (parent.width - parent.spacing) / 2
+              iconText: "󰍬"
+              text: "Sources"
+              selected: !root.showDeviceModes
+              bordered: true
+              foreground: root.bar.foreground
+              fontFamily: root.bar.fontFamily
+              fontSize: Style.font.bodySmall
+              verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+              onClicked: root.showDeviceModes = false
+            }
+          }
+
+          // ---- Device modes ----
+          PanelSeparator {
+            visible: root.showDeviceModes && root.audioProfileCards.length > 0
+            foreground: root.bar.foreground
+          }
+
+          Column {
+            width: parent.width
+            spacing: Style.space(8)
+            visible: root.showDeviceModes && root.audioProfileCards.length > 0
+
+            PanelSectionHeader {
+              text: "DEVICE MODE"
+              foreground: root.bar.foreground
+              fontFamily: root.bar.fontFamily
+            }
+
+            Repeater {
+              model: root.audioProfileCards
+
+              Column {
+                id: profileRow
+                required property var modelData
+                width: parent.width
+                spacing: Style.space(6)
+
+                Row {
+                  width: parent.width
+                  spacing: Style.space(8)
+                  Text {
+                    text: "󰋋"
+                    color: root.bar.foreground
+                    font.family: root.bar.fontFamily
+                    font.pixelSize: Style.font.title
+                  }
+                  Column {
+                    width: parent.width - parent.children[0].implicitWidth - parent.spacing
+                    spacing: Style.space(1)
+                    Text {
+                      width: parent.width
+                      text: profileRow.modelData.label
+                      color: root.bar.foreground
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: Style.font.body
+                      font.bold: true
+                      elide: Text.ElideRight
+                    }
+                    Text {
+                      width: parent.width
+                      text: profileRow.modelData.active === profileRow.modelData.off ? "DEVICE DISABLED"
+                        : (profileRow.modelData.active === profileRow.modelData.headset ? "MICROPHONE ENABLED"
+                          : (profileRow.modelData.active === profileRow.modelData.headphones ? "OUTPUT ONLY" : "INPUT ENABLED"))
+                      color: Qt.darker(root.bar.foreground, 1.4)
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: Style.font.caption
+                      font.bold: true
+                      font.letterSpacing: 1.2
+                      elide: Text.ElideRight
+                    }
+                  }
+                }
+
+                Row {
+                  id: modeButtons
+                  width: parent.width
+                  spacing: Style.space(6)
+                  readonly property int modeCount: 1 + (profileRow.modelData.secondary !== "" ? 1 : 0)
+                    + (profileRow.modelData.off !== "" ? 1 : 0)
+                  readonly property real cellWidth: (width - spacing * (modeCount - 1)) / modeCount
+
+                  Button {
+                    width: modeButtons.cellWidth
+                    iconText: "󰋋"
+                    text: profileRow.modelData.primaryLabel
+                    selected: profileRow.modelData.active === profileRow.modelData.primary
+                    bordered: true
+                    foreground: root.bar.foreground
+                    fontFamily: root.bar.fontFamily
+                    fontSize: Style.font.bodySmall
+                    iconSize: Style.font.title
+                    horizontalPadding: Style.spacing.controlPaddingX
+                    verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+                    onClicked: root.setAudioProfile(profileRow.modelData.name, profileRow.modelData.primary)
+                  }
+                  Button {
+                    visible: profileRow.modelData.secondary !== ""
+                    width: modeButtons.cellWidth
+                    iconText: "󰋋"
+                    text: profileRow.modelData.secondaryLabel
+                    selected: profileRow.modelData.active === profileRow.modelData.secondary
+                    bordered: true
+                    foreground: root.bar.foreground
+                    fontFamily: root.bar.fontFamily
+                    fontSize: Style.font.bodySmall
+                    iconSize: Style.font.title
+                    horizontalPadding: Style.spacing.controlPaddingX
+                    verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+                    onClicked: root.setAudioProfile(profileRow.modelData.name, profileRow.modelData.secondary)
+                  }
+                  Button {
+                    visible: profileRow.modelData.off !== ""
+                    width: modeButtons.cellWidth
+                    iconText: "󰂑"
+                    text: "Off"
+                    selected: profileRow.modelData.active === profileRow.modelData.off
+                    bordered: true
+                    foreground: root.bar.foreground
+                    fontFamily: root.bar.fontFamily
+                    fontSize: Style.font.bodySmall
+                    iconSize: Style.font.title
+                    horizontalPadding: Style.spacing.controlPaddingX
+                    verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
+                    onClicked: root.setAudioProfile(profileRow.modelData.name, profileRow.modelData.off)
+                  }
+                }
+              }
+            }
+          }
+
           // ---- Per-app streams ----
           PanelSeparator {
-            visible: root.displayAudioStreams.length > 0
+            visible: !root.showDeviceModes && root.displayAudioStreams.length > 0
             foreground: root.bar.foreground
           }
 
           Column {
             width: parent.width
             spacing: Style.space(10)
-            visible: root.displayAudioStreams.length > 0
+            visible: !root.showDeviceModes && root.displayAudioStreams.length > 0
 
             PanelSectionHeader {
               text: "SOURCES"

@@ -112,7 +112,7 @@ BarWidget {
           }
           Text {
             text: {
-              if (root.dnd) return "Keeping it quiet"
+              if (root.dnd) return "KEEPING IT QUIET"
               var unread = root.notificationService ? root.notificationService.pendingModel.count : 0
               if (unread > 0) return unread + (unread === 1 ? " ping waiting" : " pings waiting")
               return root.quietPhrases[root.phraseIndex % root.quietPhrases.length]

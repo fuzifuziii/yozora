@@ -22,6 +22,64 @@ function listSnapshot(list) {
   return list && list.slice ? list.slice() : []
 }
 
+function parseAudioProfileCards(raw) {
+  var cards
+  try { cards = JSON.parse(String(raw || "[]")) } catch (e) { return [] }
+  if (!Array.isArray(cards)) return []
+
+  function best(profiles, predicate, preferredPrefix) {
+    var winner = ""
+    var score = -1
+    for (var name in profiles) {
+      var profile = profiles[name] || {}
+      if (profile.available === false || !predicate(name, profile)) continue
+      var candidateScore = Number(profile.priority || 0)
+      if (preferredPrefix && name.indexOf(preferredPrefix) === 0) candidateScore += 100000
+      if (candidateScore > score) {
+        winner = name
+        score = candidateScore
+      }
+    }
+    return winner
+  }
+
+  var result = []
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i] || {}
+    var profiles = card.profiles || {}
+    var active = String(card.active_profile || "")
+    var outputPrefix = active.indexOf("output:") === 0 ? active.split("+")[0] : ""
+    var headset = best(profiles, function(name) {
+      return name.indexOf("output:") === 0 && name.indexOf("+input:") !== -1
+    }, outputPrefix)
+    var headphones = best(profiles, function(name) {
+      return name.indexOf("output:") === 0 && name.indexOf("+input:") === -1
+    }, outputPrefix)
+    var input = best(profiles, function(name) {
+      return name.indexOf("input:") === 0
+    }, "")
+    var off = profiles.off && profiles.off.available !== false ? "off" : ""
+    var fallback = best(profiles, function(name) { return name !== "off" }, "")
+    var primary = headset || headphones || input || fallback
+    if (!primary) continue
+
+    var properties = card.properties || {}
+    result.push({
+      name: String(card.name || ""),
+      label: friendlyDeviceLabel(properties["device.description"] || properties["device.nick"] || card.name || "Audio device"),
+      active: active,
+      primary: primary,
+      primaryLabel: headset ? "Headset" : (headphones ? "Output" : (input ? "Input" : "Enabled")),
+      secondary: headset && headphones ? headphones : "",
+      secondaryLabel: "Headphones",
+      headset: headset,
+      headphones: headphones,
+      off: off
+    })
+  }
+  return result
+}
+
 function outputVolumeName(volume, muted) {
   if (muted) return "Muted"
   var p = Math.round(volume * 100)
@@ -235,9 +293,10 @@ function streamRepresentsPlayer(node, player, players, streams) {
 
 if (typeof module !== "undefined") {
   module.exports = {
-    isPlaybackStream: isPlaybackStream,
-    isAudioSource: isAudioSource,
-    listSnapshot: listSnapshot,
+  isPlaybackStream: isPlaybackStream,
+  isAudioSource: isAudioSource,
+  listSnapshot: listSnapshot,
+  parseAudioProfileCards: parseAudioProfileCards,
     outputVolumeName: outputVolumeName,
     parseSinkAvailability: parseSinkAvailability,
     friendlyDeviceLabel: friendlyDeviceLabel,
