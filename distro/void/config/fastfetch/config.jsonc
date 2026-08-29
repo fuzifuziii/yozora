@@ -90,29 +90,14 @@
       "type": "wm"
     },
     {
-      "key": " DE",
-      "keyColor": "blue",
-      "type": "de"
-    },
-    {
       "key": "│ ├",
       "keyColor": "blue",
       "type": "terminal"
     },
     {
-      "key": "│ ├󰏖",
+      "key": "└ └󰏖",
       "keyColor": "blue",
       "type": "packages"
-    },
-    {
-      "key": "│ ├󰉼",
-      "keyColor": "blue",
-      "type": "wmtheme"
-    },
-    {
-      "key": "└ └",
-      "keyColor": "blue",
-      "type": "terminalfont"
     },
     {
       "format": "{#blue}└────────────────────────────────────────────────────┘",

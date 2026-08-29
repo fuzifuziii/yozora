@@ -12,7 +12,7 @@ OTHER_PKGS=(xone)
 XBPS_PKGS=(NetworkManager elogind xtools-minimal ly dolphin fastfetch fish-shell hyprland hyprpicker kitty plasma-workspace quickshell slurp grim systemsettings libnotify jq power-profiles-daemon)
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
-SRC_PKGS=(mihomo tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
+SRC_PKGS=(tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
 
 # Logging helpers
 log_info() { echo -e "${BLUE}$*${NC}"; }
