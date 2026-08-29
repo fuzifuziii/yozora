@@ -1,0 +1,18 @@
+#!/bin/bash
+
+CONFIG_FILE="$HOME/.config/xdg-desktop-portal/hyprland-portals.conf"
+
+if grep -q "org.freedesktop.impl.portal.FileChooser = fuzi" "$CONFIG_FILE"; then
+  sed -i "s/org.freedesktop.impl.portal.FileChooser = fuzi/org.freedesktop.impl.portal.FileChooser = kde/g" "$CONFIG_FILE"
+  PORTAL="KDE"
+else
+  sed -i "s/org.freedesktop.impl.portal.FileChooser = kde/org.freedesktop.impl.portal.FileChooser = fuzi/g" "$CONFIG_FILE"
+  if ! grep -q "org.freedesktop.impl.portal.FileChooser" "$CONFIG_FILE"; then
+    echo "org.freedesktop.impl.portal.FileChooser = fuzi" >>"$CONFIG_FILE"
+  fi
+  PORTAL="Fuzi"
+fi
+
+pkill -f xdg-desktop-portal
+
+notify-send "FileChooser portal" "$PORTAL"

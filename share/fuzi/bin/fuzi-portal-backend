@@ -1,0 +1,213 @@
+#!/usr/bin/python3
+"""org.freedesktop.impl.portal.FileChooser backend for fuzi-shell.
+
+Bridges xdg-desktop-portal to the quickshell FilePicker overlay via a pair
+of temp files and `quickshell ipc call`. Install with install-portal.sh,
+which copies the .portal / .service units into place; this script itself
+is expected to be launched on demand by D-Bus service activation, not run
+manually.
+"""
+
+import asyncio
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+from dbus_fast import BusType, Variant
+from dbus_fast.aio import MessageBus
+from dbus_fast.service import ServiceInterface, dbus_property, method
+from dbus_fast import PropertyAccess
+
+logging.basicConfig(
+    level=os.environ.get("FUZI_PORTAL_LOG_LEVEL", "INFO"),
+    format="%(asctime)s fuzi-portal %(levelname)s: %(message)s",
+)
+log = logging.getLogger("fuzi-portal")
+
+# How long we wait for the quickshell-side picker to answer before treating
+# the request as failed. Without this, a dead/unresponsive quickshell hangs
+# the calling application's file dialog forever instead of erroring out.
+RESPONSE_TIMEOUT = 120
+
+# response codes per the portal spec
+RESPONSE_SUCCESS = 0
+RESPONSE_CANCELLED = 1
+RESPONSE_OTHER = 2
+
+
+class Request(ServiceInterface):
+    """org.freedesktop.impl.portal.Request, exported per-call at the
+    caller-supplied `handle` path. The only method a caller can invoke on
+    it is Close(), used to cancel an in-flight request (e.g. the app that
+    asked for the dialog gave up, or the user hit Escape somewhere the
+    portal frontend controls, outside our own UI)."""
+
+    def __init__(self, on_close):
+        super().__init__("org.freedesktop.impl.portal.Request")
+        self._on_close = on_close
+
+    @method()
+    def Close(self):
+        self._on_close()
+
+
+class FileChooser(ServiceInterface):
+    def __init__(self, bus):
+        super().__init__("org.freedesktop.impl.portal.FileChooser")
+        self.bus = bus
+        self._active_requests = {}  # handle path -> asyncio.Event (cancel signal)
+
+    @dbus_property(access=PropertyAccess.READ)
+    def version(self) -> "u":
+        # We implement OpenFile/SaveFile/SaveFiles with basic options only
+        # (no multiple-selection, no filters, no choices) — version 1 is
+        # the honest declaration for that feature set. Bump this only once
+        # those are actually implemented.
+        return 1
+
+    @staticmethod
+    def directory_from_options(options):
+        value = options.get("current_folder")
+        if value is None:
+            return str(Path.home())
+        try:
+            # Per the FileChooser portal spec, byte-array path options like
+            # current_folder are conventionally NUL-terminated C strings —
+            # the trailing \0 is part of the wire value, not a decoding
+            # artifact. Left in place, it silently breaks anything that
+            # execs the string as a process argument (posix_spawn rejects
+            # embedded NUL bytes outright).
+            raw = bytes(value.value).split(b"\x00", 1)[0]
+            decoded = raw.decode()
+            return decoded or str(Path.home())
+        except (AttributeError, TypeError, UnicodeDecodeError):
+            return str(Path.home())
+
+    @method()
+    async def OpenFile(self, handle: "o", app_id: "s", parent_window: "s", title: "s", options: "a{sv}") -> "ua{sv}":
+        return await self.open_picker(handle, title or "Open file", options, False)
+
+    @method()
+    async def SaveFile(self, handle: "o", app_id: "s", parent_window: "s", title: "s", options: "a{sv}") -> "ua{sv}":
+        return await self.open_picker(handle, title or "Save file", options, True)
+
+    @method()
+    async def SaveFiles(self, handle: "o", app_id: "s", parent_window: "s", title: "s", options: "a{sv}") -> "ua{sv}":
+        return await self.open_picker(handle, title or "Save files", options, True)
+
+    async def open_picker(self, handle, title, options, save_mode):
+        cancel_event = asyncio.Event()
+        request = Request(on_close=cancel_event.set)
+
+        # A second call can arrive on the same handle path only if the
+        # caller reuses one, which would be a caller bug — guard it anyway
+        # rather than letting export() raise.
+        if handle in self._active_requests:
+            log.warning("duplicate handle requested, replacing: %s", handle)
+            self._unexport_request(handle)
+        self._active_requests[handle] = cancel_event
+        self.bus.export(handle, request)
+
+        selection_fd, selection_file = tempfile.mkstemp(prefix="fuzi-file-selection-")
+        done_fd, done_file = tempfile.mkstemp(prefix="fuzi-file-done-")
+        os.close(selection_fd)
+        os.close(done_fd)
+        os.unlink(done_file)
+
+        try:
+            proc = subprocess.Popen([
+                "/usr/bin/quickshell", "ipc", "call", "file-selector", "open",
+                self.directory_from_options(options), title, selection_file, done_file,
+            ])
+        except OSError as exc:
+            log.error("failed to launch quickshell ipc call: %s", exc)
+            return RESPONSE_OTHER, {}
+
+        try:
+            response, results = await self._wait_for_result(
+                selection_file, done_file, cancel_event, save_mode
+            )
+            if cancel_event.is_set() and response != RESPONSE_CANCELLED:
+                # Close() fired after we'd already got a result; the spec
+                # says a Response signal/return after Close() is ignored by
+                # the caller, so this is safe either way. Nothing to add.
+                pass
+            return response, results
+        finally:
+            self._unexport_request(handle)
+            for filename in (selection_file, done_file):
+                try:
+                    os.unlink(filename)
+                except OSError:
+                    pass
+            # If the quickshell-side process is still around for some
+            # reason (it shouldn't be — it's a one-shot `ipc call`), don't
+            # leave it dangling.
+            if proc.poll() is None:
+                try:
+                    proc.terminate()
+                except OSError:
+                    pass
+
+    async def _wait_for_result(self, selection_file, done_file, cancel_event, save_mode):
+        loop = asyncio.get_event_loop()
+        deadline = loop.time() + RESPONSE_TIMEOUT
+
+        while not os.path.exists(done_file):
+            if cancel_event.is_set():
+                # Tell the quickshell side to close the overlay too, so a
+                # portal-side cancel (e.g. the calling app closed) doesn't
+                # leave our picker stuck open.
+                subprocess.Popen([
+                    "/usr/bin/quickshell", "ipc", "call", "file-selector", "cancel",
+                ])
+                return RESPONSE_CANCELLED, {}
+            if loop.time() > deadline:
+                log.warning("timed out waiting for file-picker response")
+                return RESPONSE_OTHER, {}
+            await asyncio.sleep(0.1)
+
+        selected = ""
+        try:
+            with open(selection_file, "r", encoding="utf-8") as stream:
+                selected = stream.readline().strip()
+        except OSError:
+            pass
+
+        if not selected:
+            return RESPONSE_CANCELLED, {}
+
+        results = {"uris": Variant("as", [Path(selected).resolve().as_uri()])}
+        if save_mode:
+            results["current_name"] = Variant("s", Path(selected).name)
+        return RESPONSE_SUCCESS, results
+
+    def _unexport_request(self, handle):
+        self._active_requests.pop(handle, None)
+        try:
+            self.bus.unexport(handle)
+        except Exception:
+            pass
+
+
+async def main():
+    bus = await MessageBus(bus_type=BusType.SESSION).connect()
+    reply = await bus.request_name("org.freedesktop.impl.portal.desktop.fuzi")
+    # request_name returns a RequestNameReply enum; anything other than
+    # PRIMARY_OWNER means another instance already owns the name (most
+    # likely: this backend is already running, e.g. started twice by
+    # accident). Fail loudly instead of silently doing nothing.
+    if str(reply) != "RequestNameReply.PRIMARY_OWNER":
+        log.error("could not own bus name (reply=%s) — is another instance already running?", reply)
+        sys.exit(1)
+
+    bus.export("/org/freedesktop/portal/desktop", FileChooser(bus))
+    log.info("fuzi portal backend ready")
+    await asyncio.Event().wait()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

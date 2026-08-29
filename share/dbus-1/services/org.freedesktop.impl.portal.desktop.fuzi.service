@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.fuzi
+Exec=/bin/sh -lc 'exec "$HOME/.local/share/fuzi/bin/fuzi-portal-backend"'

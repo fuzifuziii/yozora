@@ -16,6 +16,7 @@ Item {
   property string filterText: ""
   property string selectedPath: ""
   property string selectedName: ""
+  property int selectedIndex: -1
   property bool opened: false
   property var entries: []
   property var visibleEntries: []
@@ -41,6 +42,7 @@ Item {
     filterText = ""
     selectedPath = ""
     selectedName = ""
+    selectedIndex = -1
     opened = true
     loadDirectory()
   }
@@ -70,12 +72,28 @@ Item {
   function updateVisibleEntries() {
     if (!filterText) {
       visibleEntries = entries
+      selectedIndex = -1
       return
     }
     var query = filterText.toLowerCase()
     visibleEntries = entries.filter(function(item) {
       return item.name.toLowerCase().indexOf(query) !== -1
     })
+    selectedIndex = -1
+  }
+
+  function moveSelection(delta) {
+    if (visibleEntries.length === 0) return
+    selectedIndex = Math.max(0, Math.min(visibleEntries.length - 1,
+      selectedIndex < 0 ? (delta > 0 ? 0 : visibleEntries.length - 1) : selectedIndex + delta))
+    choose(visibleEntries[selectedIndex])
+  }
+
+  function activateSelection() {
+    if (selectedIndex < 0 || selectedIndex >= visibleEntries.length) return
+    var entry = visibleEntries[selectedIndex]
+    if (String(entry.kind).toUpperCase() === "D") choose(entry)
+    else finish()
   }
 
   function choose(item) {
@@ -143,44 +161,63 @@ Item {
       height: Math.min(parent.height - Style.space(32), Style.space(560))
       anchors.centerIn: parent
       z: 1
-      color: root.surface
-      borderSpec: Border.flat(root.foreground, Style.space(1))
-      radius: 0
+      color: Color.popups.background
+      borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
+      radius: Style.cornerRadius
 
       MouseArea { anchors.fill: parent; onClicked: {} }
 
       Column {
         anchors.fill: parent
-        anchors.margins: Style.space(20)
-        spacing: Style.space(12)
+        anchors.margins: Style.spacing.popupPadding
+        spacing: Style.space(14)
 
-        Row {
+        Item {
+          id: hero
           width: parent.width
+          implicitHeight: Math.max(pickerIcon.implicitHeight, pickerLabels.implicitHeight)
+
           Text {
-            width: parent.width - cancelButton.implicitWidth
-            text: root.title
+            id: pickerIcon
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: "󰉋"
             color: root.foreground
             font.family: Style.font.family
-            font.pixelSize: Style.font.title
-            font.bold: true
+            font.pixelSize: Style.font.display
           }
-          Button {
-            id: cancelButton
-            iconText: "󰅖"
-            foreground: root.foreground
-            tooltipText: "Cancel"
-            onClicked: root.cancel()
+
+          Column {
+            id: pickerLabels
+            anchors.left: pickerIcon.right
+            anchors.leftMargin: Style.space(14)
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(2)
+
+            Text {
+              width: parent.width
+              text: root.title
+              color: root.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.title
+              font.bold: true
+              elide: Text.ElideRight
+            }
+            Text {
+              width: parent.width
+              text: root.currentDirectory
+              color: root.muted
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              font.bold: true
+              font.letterSpacing: 1.2
+              elide: Text.ElideMiddle
+            }
           }
         }
 
-        Text {
-          width: parent.width
-          text: root.currentDirectory
-          color: root.muted
-          font.family: Style.font.family
-          font.pixelSize: Style.font.caption
-          elide: Text.ElideMiddle
-        }
+        PanelSeparator { id: separatorTop; foreground: root.foreground }
 
         TextField {
           id: searchField
@@ -191,28 +228,39 @@ Item {
           onTextChanged: root.filterText = text
           Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Escape) root.cancel()
-            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.finish()
-            else if (event.key === Qt.Key_Down) { fileList.forceActiveFocus(); event.accepted = true }
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.activateSelection()
+            else if (event.key === Qt.Key_Down) { root.moveSelection(1); fileList.forceActiveFocus(); event.accepted = true }
           }
+        }
+
+        PanelSectionHeader {
+          id: filesHeader
+          text: "FILES"
+          foreground: root.foreground
         }
 
         ListView {
           id: fileList
           width: parent.width
-          height: parent.height - 150
+          height: Math.max(Style.space(120), parent.height - hero.implicitHeight
+            - searchField.implicitHeight - filesHeader.implicitHeight - footer.implicitHeight
+            - separatorTop.implicitHeight - separatorBottom.implicitHeight - Style.space(84))
           clip: true
           focus: true
           model: root.visibleEntries
-          delegate: BorderSurface {
+          delegate: CursorSurface {
             required property var modelData
+            required property int index
             width: fileList.width
-            height: Style.space(38)
-            color: modelData.path === root.selectedPath ? Util.alpha(root.foreground, 0.14) : "transparent"
-            borderSpec: Border.none()
+            implicitHeight: Style.space(38)
+            hasCursor: index === root.selectedIndex
+            current: modelData.path === root.selectedPath
+            foreground: root.foreground
 
             Row {
               anchors.fill: parent
-              anchors.leftMargin: Style.space(10)
+              anchors.leftMargin: Style.space(8)
+              anchors.rightMargin: Style.space(8)
               spacing: Style.space(10)
               Text {
                 text: String(modelData.kind).toUpperCase() === "D" ? "󰉋" : "󰈙"
@@ -234,20 +282,27 @@ Item {
 
             MouseArea {
               anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onContainsMouseChanged: if (containsMouse) root.selectedIndex = index
               onClicked: {
                 root.choose(modelData)
-                if (String(modelData.kind).toUpperCase() !== "D") root.finish()
               }
-              onDoubleClicked: if (String(modelData.kind).toUpperCase() !== "D") root.finish()
+              onDoubleClicked: root.activateSelection()
             }
           }
           Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Escape) root.cancel()
-            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.finish()
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.activateSelection()
+            else if (event.key === Qt.Key_Up) { root.moveSelection(-1); event.accepted = true }
+            else if (event.key === Qt.Key_Down) { root.moveSelection(1); event.accepted = true }
           }
         }
 
+        PanelSeparator { id: separatorBottom; foreground: root.foreground }
+
         Row {
+          id: footer
           width: parent.width
           spacing: Style.space(8)
           Text {
@@ -264,8 +319,8 @@ Item {
             iconText: "󰐕"
             text: "Open"
             foreground: root.foreground
-            enabled: root.selectedPath !== ""
-            onClicked: root.finish()
+            bordered: true
+            onClicked: if (root.selectedPath) root.finish()
           }
         }
       }

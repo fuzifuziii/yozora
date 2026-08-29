@@ -3,7 +3,7 @@
 set -e
 
 # Packages
-BASE_PKGS=(inotify-tools python-gobject power-profiles-daemon wl-clipboard wl-clip-persist cava gum imagemagick base-devel)
+BASE_PKGS=(python-dbus-fast inotify-tools python-gobject power-profiles-daemon wl-clipboard wl-clip-persist cava gum imagemagick base-devel)
 CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(dkms nvidia-open-dkms nvidia-settings nvidia-utils lib32-nvidia-utils libva-nvidia-driver opencl-nvidia libxnvctrl)
 PIPEWIRE_PKGS=(pipewire lib32-pipewire pipewire-alsa pipewire-pulse wireplumber)

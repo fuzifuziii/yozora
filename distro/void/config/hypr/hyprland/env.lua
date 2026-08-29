@@ -34,6 +34,7 @@ hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 
 -- Yozora --
+hl.env("GTK_USE_PORTAL", "1")
 hl.env("TERMINAL", "xdg-terminal-exec")
 hl.env("EDITOR", "nvim")
 
