@@ -39,7 +39,8 @@
           "id": "fuzi.system-monitor"
         },
         {
-          "id": "fuzi.power"
+          "id": "fuzi.power",
+          "showPercentage": false
         },
         {
           "id": "fuzi.dnd"
@@ -48,10 +49,6 @@
     },
     "position": "top",
     "transparent": false
-  },
-  "idle": {
-    "lock": 300,
-    "screensaver": 150
   },
   "plugins": [
     {

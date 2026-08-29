@@ -58,6 +58,7 @@ Item {
     id: persisted
     reloadableId: "fuzi-notifications"
     property bool doNotDisturb: false
+    property bool doNotDisturbFullscreen: false
     onDoNotDisturbChanged: {
       // Suppress the write that load-time hydration would otherwise trigger.
       if (service._hydrating) return
@@ -70,9 +71,26 @@ Item {
   property bool _hydrating: false
 
   readonly property alias doNotDisturb: persisted.doNotDisturb
+  readonly property alias doNotDisturbFullscreen: persisted.doNotDisturbFullscreen
+  property var fullscreenMonitors: ({})
+  property var fullscreenMonitorIds: ({})
+
+  function monitorIsFullscreen(name) {
+    return !!fullscreenMonitors[String(name || "")]
+  }
+
+  function screenIsFullscreen(screen) {
+    if (!screen) return false
+    if (fullscreenMonitorIds[String(screen.id)] === true) return true
+    return monitorIsFullscreen(screen.name)
+  }
 
   function setDoNotDisturb(value) {
     persisted.doNotDisturb = !!value
+  }
+
+  function setDoNotDisturbFullscreen(value) {
+    persisted.doNotDisturbFullscreen = !!value
   }
 
   // popupModel feeds the on-screen toast stack.
@@ -437,6 +455,7 @@ Item {
 
   property string activeWindowClass: ""
   property string activeWindowTitle: ""
+  property bool activeWindowFullscreen: false
 
   function normalizedApp(value) {
     return String(value || "").toLowerCase()
@@ -474,11 +493,13 @@ Item {
         try {
           var window = JSON.parse(String(text || "{}"))
           service.activeWindowClass = String(window.class || window.initialClass || "")
-          service.activeWindowTitle = String(window.title || "")
+           service.activeWindowTitle = String(window.title || "")
+           service.activeWindowFullscreen = Number(window.fullscreen || 0) > 0
           service.dismissPopupsForActiveApp()
         } catch (e) {
           service.activeWindowClass = ""
-          service.activeWindowTitle = ""
+           service.activeWindowTitle = ""
+           service.activeWindowFullscreen = false
         }
       }
     }
@@ -490,6 +511,55 @@ Item {
     repeat: true
     triggeredOnStart: true
     onTriggered: if (!activeWindowProc.running) activeWindowProc.running = true
+  }
+
+  Process {
+    id: monitorProc
+    command: ["bash", "-lc", "printf '{\"monitors\":'; hyprctl -j monitors; printf ',\"clients\":'; hyprctl -j clients; printf '}'"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var snapshot = JSON.parse(String(text || "{}"))
+          var monitors = Array.isArray(snapshot.monitors) ? snapshot.monitors : []
+          var clients = Array.isArray(snapshot.clients) ? snapshot.clients : []
+          var namesById = ({})
+          var activeWorkspaceByMonitor = ({})
+          for (var m = 0; m < monitors.length; m++) {
+            if (monitors[m] && monitors[m].name !== undefined) {
+              namesById[String(monitors[m].id)] = String(monitors[m].name)
+              activeWorkspaceByMonitor[String(monitors[m].id)] = monitors[m].activeWorkspace
+                ? Number(monitors[m].activeWorkspace.id) : 0
+            }
+          }
+          var next = ({})
+          var nextIds = ({})
+          for (var i = 0; i < clients.length; i++) {
+            var client = clients[i]
+            if (!client || Number(client.fullscreen || 0) <= 0) continue
+            var activeWorkspace = activeWorkspaceByMonitor[String(client.monitor)]
+            if (activeWorkspace !== undefined && client.workspace
+                && Number(client.workspace.id) !== activeWorkspace) continue
+            var name = namesById[String(client.monitor)]
+            if (name) next[name] = true
+            nextIds[String(client.monitor)] = true
+          }
+          service.fullscreenMonitors = next
+          service.fullscreenMonitorIds = nextIds
+        } catch (e) {
+          service.fullscreenMonitors = ({})
+          service.fullscreenMonitorIds = ({})
+        }
+      }
+    }
+  }
+
+  Timer {
+    interval: 500
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: if (!monitorProc.running) monitorProc.running = true
   }
 
   // ---------------------------------------------------- image cache
@@ -669,6 +739,7 @@ Item {
     if (parsed.dnd !== null) {
       service._hydrating = true
       persisted.doNotDisturb = parsed.dnd
+      if (parsed.fullscreenDnd !== null) persisted.doNotDisturbFullscreen = parsed.fullscreenDnd
       service._hydrating = false
     }
 
@@ -706,6 +777,7 @@ Item {
     var payload = {
       version: 2,
       dnd: persisted.doNotDisturb,
+      fullscreenDnd: persisted.doNotDisturbFullscreen,
       pending: dump(pendingModel),
       past: dump(pastModel)
     }
@@ -849,7 +921,7 @@ Item {
       id: popupWindow
       required property var modelData
       screen: modelData
-      visible: popupModel.count > 0
+      visible: popupModel.count > 0 && !(service.doNotDisturbFullscreen && service.screenIsFullscreen(modelData))
 
       WlrLayershell.namespace: "fuzi-notifications"
       WlrLayershell.layer: WlrLayer.Overlay

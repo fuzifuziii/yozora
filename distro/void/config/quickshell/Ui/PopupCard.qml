@@ -58,6 +58,51 @@ PopupWindow {
     return Math.round(Math.min(desired, maxHeight))
   }
 
+  function anchoredRect() {
+    if (!anchorItem || !bar || !anchorItem.QsWindow || !anchorItem.QsWindow.window)
+      return { x: 0, y: 0 }
+
+    var window = anchorItem.QsWindow.window
+    var popupWidth = implicitWidth
+    var popupHeight = implicitHeight
+    var localX = anchorItem.width / 2 - popupWidth / 2
+    var localY = anchorItem.height + margin
+
+    if (bar.position === "bottom") {
+      localY = -popupHeight - margin
+    } else if (bar.position === "left") {
+      localX = anchorItem.width + margin
+      localY = anchorItem.height / 2 - popupHeight / 2
+    } else if (bar.position === "right") {
+      localX = -popupWidth - margin
+      localY = anchorItem.height / 2 - popupHeight / 2
+    }
+
+    if (centerOnBar) {
+      var cx = 0
+      var cy = 0
+      if (bar.position === "top" || bar.position === "bottom") {
+        cx = window.width / 2 - popupWidth / 2
+        cy = bar.position === "bottom" ? -popupHeight - margin : window.height + margin
+        cx = Math.max(margin, Math.min(cx, window.width - popupWidth - margin))
+      } else {
+        cx = bar.position === "left" ? window.width + margin : -popupWidth - margin
+        cy = window.height / 2 - popupHeight / 2
+        cy = Math.max(margin, Math.min(cy, window.height - popupHeight - margin))
+      }
+      return { x: Math.round(cx), y: Math.round(cy) }
+    }
+
+    var point = anchorItem.mapToItem(window.contentItem, localX, localY)
+    if (bar.position === "top" || bar.position === "bottom")
+      point.x = Math.max(margin, Math.min(point.x, window.width - popupWidth - margin))
+    else
+      point.y = Math.max(margin, Math.min(point.y, window.height - popupHeight - margin))
+    return { x: Math.round(point.x), y: Math.round(point.y) }
+  }
+
+  readonly property var _anchoredRect: anchoredRect()
+
   function close() {
     if (owner && "close" in owner) owner.close()
     else root.open = false
@@ -92,60 +137,10 @@ PopupWindow {
     adjustment: PopupAdjustment.Slide
     edges: Edges.Top | Edges.Left
     gravity: Edges.Bottom | Edges.Right
+    rect.x: root._anchoredRect.x
+    rect.y: root._anchoredRect.y
     rect.width: 1
     rect.height: 1
-
-    onAnchoring: {
-      if (!root.anchorItem || !root.bar) return
-
-      var target = root.anchorItem
-      var popupWidth = root.implicitWidth
-      var popupHeight = root.implicitHeight
-      var localX = target.width / 2 - popupWidth / 2
-      var localY = target.height + root.margin
-
-      if (root.bar.position === "bottom") {
-        localY = -popupHeight - root.margin
-      } else if (root.bar.position === "left") {
-        localX = target.width + root.margin
-        localY = target.height / 2 - popupHeight / 2
-      } else if (root.bar.position === "right") {
-        localX = -popupWidth - root.margin
-        localY = target.height / 2 - popupHeight / 2
-      }
-
-      var window = target.QsWindow.window
-      if (!window) return
-
-      if (root.centerOnBar) {
-        var cx = 0;
-        var cy = 0;
-        if (root.bar.position === "top" || root.bar.position === "bottom") {
-          cx = window.width / 2 - popupWidth / 2
-          cy = root.bar.position === "bottom" ? -popupHeight - root.margin : window.height + root.margin
-          cx = Math.max(root.margin, Math.min(cx, window.width - popupWidth - root.margin))
-        } else {
-          cx = root.bar.position === "left" ? window.width + root.margin : -popupWidth - root.margin
-          cy = window.height / 2 - popupHeight / 2
-          cy = Math.max(root.margin, Math.min(cy, window.height - popupHeight - root.margin))
-        }
-
-        popupAnchor.rect.x = Math.round(cx)
-        popupAnchor.rect.y = Math.round(cy)
-        return
-      }
-
-      var point = window.contentItem.mapFromItem(target, localX, localY)
-
-      if (root.bar.position === "top" || root.bar.position === "bottom") {
-        point.x = Math.max(root.margin, Math.min(point.x, window.width - popupWidth - root.margin))
-      } else {
-        point.y = Math.max(root.margin, Math.min(point.y, window.height - popupHeight - root.margin))
-      }
-
-      popupAnchor.rect.x = Math.round(point.x)
-      popupAnchor.rect.y = Math.round(point.y)
-    }
   }
 
   BorderSurface {

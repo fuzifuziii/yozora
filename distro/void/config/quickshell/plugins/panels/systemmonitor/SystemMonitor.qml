@@ -103,10 +103,7 @@ BarWidget {
     text: root.icon
     active: root.busy
     tooltipText: root.tooltip
-    onPressed: function(b) {
-      if (b === Qt.RightButton && root.bar) root.bar.run("xdg-terminal-exec btop")
-      else root.toggle()
-    }
+    onPressed: function(b) { root.toggle() }
     onWheelMoved: function(delta) { root.toggle() }
   }
 

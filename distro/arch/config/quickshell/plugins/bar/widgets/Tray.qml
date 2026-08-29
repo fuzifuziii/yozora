@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import Quickshell.Services.SystemTray
+import Quickshell.Hyprland
 import qs.Commons
 import qs.Ui
 import "TrayModel.js" as TrayModel
@@ -16,6 +17,24 @@ BarWidget {
   property bool trayMenuOpen: false
   property var activeTrayItem: null
   property var activeTrayAnchor: null
+  // Cascading QML submenus (TraySubmenu instances) currently open, deepest
+  // last. Kept here (not per-popup) so the single HyprlandFocusGrab below
+  // can list every open submenu window — otherwise hovering the mouse into
+  // a submenu counts as "outside" and the grab closes everything under it.
+  property var openSubmenuWindows: []
+
+  function registerSubmenuWindow(w) {
+    if (openSubmenuWindows.indexOf(w) !== -1) return
+    openSubmenuWindows = openSubmenuWindows.concat([w])
+  }
+
+  function unregisterSubmenuWindow(w) {
+    var idx = openSubmenuWindows.indexOf(w)
+    if (idx === -1) return
+    var copy = openSubmenuWindows.slice()
+    copy.splice(idx, 1)
+    openSubmenuWindows = copy
+  }
   readonly property color foreground: bar ? bar.foreground : Color.foreground
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property var pinnedIds: settings.pinned instanceof Array ? settings.pinned : []
@@ -442,6 +461,9 @@ BarWidget {
     owner: root
     bar: root.bar
     open: root.trayMenuOpen
+    // "hover" just disables PopupCard's own HyprlandFocusGrab — we run our
+    // own below, wide enough to also cover any open cascading submenus.
+    triggerMode: "hover"
     padding: Style.space(8)
     borderColor: Color.popups.border
     contentWidth: trayMenuPopup.fittedContentWidth(Style.space(232))
@@ -467,115 +489,28 @@ BarWidget {
         Repeater {
           model: trayMenuOpener.children
 
-          delegate: Item {
-            id: menuRow
-            required property var modelData
-            required property int index
-
-            readonly property string rowText: String(modelData.text || "")
-            readonly property string activeTitle: root.activeTrayItem ? String(root.activeTrayItem.title || root.activeTrayItem.id || "") : ""
-            readonly property bool rootTitleEntry: index === 0 && modelData.hasChildren && rowText.toLowerCase() === activeTitle.toLowerCase()
-            readonly property bool leadingSeparator: modelData.isSeparator && index <= 1
-            readonly property bool hiddenRow: rootTitleEntry || leadingSeparator
-
-            visible: !hiddenRow
-            width: trayMenuColumn.width
-            implicitHeight: hiddenRow ? 0 : (modelData.isSeparator ? Style.space(11) : Style.space(30))
-            opacity: modelData.enabled ? 1.0 : 0.45
-
-            Rectangle {
-              visible: menuRow.modelData.isSeparator
-              anchors.left: parent.left
-              anchors.leftMargin: Style.space(10)
-              anchors.right: parent.right
-              anchors.rightMargin: Style.space(10)
-              anchors.verticalCenter: parent.verticalCenter
-              height: 1
-              color: Color.popups.border
-              opacity: 0.45
-            }
-
-            Rectangle {
-              visible: !menuRow.modelData.isSeparator
-              anchors.fill: parent
-              radius: Math.max(2, Style.cornerRadius)
-              color: rowMouse.containsMouse && menuRow.modelData.enabled ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
-            }
-
-            Text {
-              visible: !menuRow.modelData.isSeparator && menuRow.modelData.buttonType !== QsMenuButtonType.None
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.left: parent.left
-              width: Style.space(22)
-              horizontalAlignment: Text.AlignHCenter
-              text: menuRow.modelData.checkState === Qt.Checked ? "\uf00c" : ""
-              color: root.foreground
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.bodySmall
-            }
-
-            Image {
-              id: menuIcon
-              visible: !menuRow.modelData.isSeparator && String(menuRow.modelData.icon || "") !== ""
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.left: parent.left
-              anchors.leftMargin: Style.space(24)
-              width: Style.space(16)
-              height: Style.space(16)
-              fillMode: Image.PreserveAspectFit
-              // Decode at physical pixels: IconImage uses the logical size,
-              // which leaves PNG icons upscaled and blurry on HiDPI displays.
-              sourceSize.width: width * Screen.devicePixelRatio
-              sourceSize.height: height * Screen.devicePixelRatio
-              source: menuRow.modelData.icon
-            }
-
-            Text {
-              visible: !menuRow.modelData.isSeparator
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.left: parent.left
-              anchors.leftMargin: menuIcon.visible ? Style.space(46) : Style.space(28)
-              anchors.right: submenuGlyph.left
-              anchors.rightMargin: Style.space(8)
-              text: menuRow.rowText
-              color: root.foreground
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.bodySmall
-              elide: Text.ElideRight
-            }
-
-            Text {
-              id: submenuGlyph
-              visible: !menuRow.modelData.isSeparator && menuRow.modelData.hasChildren
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.right: parent.right
-              anchors.rightMargin: Style.space(10)
-              text: "\u203a"
-              color: root.foreground
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.bodySmall
-            }
-
-            MouseArea {
-              id: rowMouse
-              anchors.fill: parent
-              hoverEnabled: true
-              enabled: !menuRow.modelData.isSeparator && menuRow.modelData.enabled
-              cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-              onClicked: {
-                if (menuRow.modelData.hasChildren) {
-                  var point = menuRow.QsWindow.contentItem.mapFromItem(menuRow, menuRow.width, menuRow.height / 2)
-                  menuRow.modelData.display(menuRow.QsWindow.window, point.x, point.y)
-                } else {
-                  menuRow.modelData.triggered()
-                  root.close()
-                }
-              }
-            }
+          delegate: TrayMenuRow {
+            rowWidth: trayMenuColumn.width
+            ownerRoot: root
+            activeTrayItem: root.activeTrayItem
+            applyTitleDedup: true
           }
         }
       }
     }
+  }
+
+  // Own grab instead of PopupCard's built-in one (trayMenuPopup uses
+  // triggerMode: "hover" to disable that one) so we can list every currently
+  // open cascading TraySubmenu window here too — otherwise the moment the
+  // pointer enters a submenu, Hyprland sees a window outside the grab and
+  // clears it, closing the whole menu out from under the submenu.
+  HyprlandFocusGrab {
+    active: root.trayMenuOpen
+    windows: [trayMenuPopup]
+      .concat(root.activeTrayAnchor && root.activeTrayAnchor.QsWindow.window ? [root.activeTrayAnchor.QsWindow.window] : [])
+      .concat(root.openSubmenuWindows)
+    onCleared: root.close()
   }
 
   // Renders a tray icon, recoloring symbolic icons to the bar foreground so

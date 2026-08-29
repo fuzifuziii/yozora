@@ -117,7 +117,7 @@ function parseHistory(raw, normalUrgency, historyCap) {
   var cap = historyCap === undefined || historyCap === null ? 100 : Number(historyCap)
   if (isNaN(cap)) cap = 100
   cap = Math.max(0, cap)
-  if (!text) return { empty: true, error: false, dnd: null, pending: [], past: [], hadDuplicates: false }
+  if (!text) return { empty: true, error: false, dnd: null, fullscreenDnd: null, pending: [], past: [], hadDuplicates: false }
 
   try {
     var parsed = JSON.parse(text)
@@ -132,12 +132,13 @@ function parseHistory(raw, normalUrgency, historyCap) {
       empty: false,
       error: false,
       dnd: parsed && typeof parsed.dnd === "boolean" ? parsed.dnd : null,
+      fullscreenDnd: parsed && typeof parsed.fullscreenDnd === "boolean" ? parsed.fullscreenDnd : null,
       pending: pendingDeduped.slice(0, cap).map(function(entry) { return historyEntry(entry, normalUrgency) }),
       past: pastDeduped.slice(0, cap).map(function(entry) { return historyEntry(entry, normalUrgency) }),
       hadDuplicates: pendingDeduped.length !== pendingRaw.length || pastDeduped.length !== pastRaw.length
     }
   } catch (e) {
-    return { empty: false, error: true, errorMessage: String(e), dnd: null, pending: [], past: [], hadDuplicates: false }
+    return { empty: false, error: true, errorMessage: String(e), dnd: null, fullscreenDnd: null, pending: [], past: [], hadDuplicates: false }
   }
 }
 
