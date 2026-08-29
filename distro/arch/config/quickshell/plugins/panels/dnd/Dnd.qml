@@ -37,8 +37,23 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: root.dnd ? "󰂛" : "󰂚"
+    text: ""
     active: false
+    iconComponent: Component {
+      Item {
+        OpticalGlyph {
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.bottom: parent.bottom
+          anchors.topMargin: 2
+          text: root.dnd ? "󰂛" : "󰂚"
+          fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+          fontSize: Style.bar.iconFont
+          color: root.bar ? root.bar.barForeground : Color.foreground
+        }
+      }
+    }
     tooltipText: "Notification history"
     onPressed: function(button) {
       if (button === Qt.RightButton) {
