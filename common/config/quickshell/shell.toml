@@ -1,0 +1,39 @@
+[bar]
+background = background
+background-alpha = 1.0
+text = foreground
+active = accent
+size-horizontal = 32
+size-vertical = 40
+icon-slot = 26
+icon-canvas = 18
+icon-font = 14
+status-slot = 22
+
+[popups]
+background = background
+background-alpha = 1.0
+text = foreground
+border = accent
+border-alpha = 1.0
+
+[tooltip]
+background = background
+text = foreground
+border = accent
+
+[menu]
+background = background
+text = foreground
+border = accent
+selected-text = accent
+
+[font]
+base-size = 13
+
+[controls]
+normal-border-width = 1
+hover-cursor-border-width = 1
+focus-color = accent
+selected-color = accent
+hover-cursor-color = accent

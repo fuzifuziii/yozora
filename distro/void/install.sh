@@ -2,9 +2,19 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# shellcheck source=../../common/lib.sh
+source "$REPO_ROOT/common/lib.sh"
+
+# Void's config differs from the shared common/config in exactly one file
+# (hypr/hyprland/execs.lua — systemd vs runit/pipewire startup). Everything
+# else is copied as-is from common/config; this dir is layered on top.
+CONFIG_OVERRIDE_DIR="$SCRIPT_DIR/overrides/config"
+
 # Packages
 BASE_PKGS=(inotify-tools cava gum ImageMagick python3-dbus-next wl-clipboard wl-clip-persist ark unzip unrar zip 7zip 7zip-unrar curl kde-cli-tools)
-CUPS_PKGS=(cups gutenprint ghostscript)
 NVIDIA_PKGS=(nvidia nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvidia-opencl)
 PIPEWIRE_PKGS=(pipewire wireplumber)
 OTHER_PKGS=(xone)
@@ -13,12 +23,6 @@ XBPS_PKGS=(NetworkManager elogind xtools-minimal ly dolphin fastfetch fish-shell
 XREPO_PKGS=(xlibre hyprland hyprpicker xdg-desktop-portal-hyprland hyprland-guiutils hyprland-protocols)
 FONTS_PKGS=(noto-fonts-cjk noto-fonts-emoji noto-fonts-ttf-extra noto-fonts-ttf)
 SRC_PKGS=(tokyonight-gtk-theme wayfreeze xdg-terminal-exec hyprland-preview-share-picker)
-
-# Logging helpers
-log_info() { echo -e "${BLUE}$*${NC}"; }
-log_ok() { echo -e "${GREEN}✓ $*${NC}"; }
-log_warn() { echo -e "${YELLOW}$*${NC}"; }
-log_err() { echo -e "${RED}$*${NC}"; }
 
 # Runit service helpers
 enable_service() {
@@ -286,39 +290,6 @@ link_icon_theme() {
   fi
 }
 
-set_fish_default_shell() {
-  command -v fish >/dev/null 2>&1 || return 0
-
-  echo
-  log_info "Setting fish as the default shell..."
-  local fish_path
-  fish_path=$(command -v fish)
-
-  if [[ "$SHELL" == "$fish_path" ]]; then
-    log_ok "Fish is already the default shell"
-    return 0
-  fi
-
-  if ! grep -q "^$fish_path$" /etc/shells; then
-    echo "$fish_path" | sudo tee -a /etc/shells >/dev/null
-  fi
-
-  if chsh -s "$fish_path"; then
-    log_ok "Default shell changed to fish"
-    log_warn "⚠ Changes will take effect after logging out or rebooting"
-  else
-    log_warn "⚠ Failed to change shell. chsh -s $fish_path"
-  fi
-}
-
-apply_tokyonight_colorscheme() {
-  if command -v plasma-apply-colorscheme &>/dev/null; then
-    plasma-apply-colorscheme TokyoNight || true
-  else
-    kwriteconfig6 --file kdeglobals --group General --key ColorScheme "Tokyo Night" || true
-  fi
-}
-
 # Installation functions
 i_yozora() {
   log_info "=== Starting Yozora installation ==="
@@ -328,55 +299,9 @@ i_yozora() {
   mkdir -p "$HOME/.config"
   mkdir -p "$HOME/.local/share"
 
-  local script_dir repo_root
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  repo_root="$(cd "$script_dir/../.." && pwd)"
-
-  local config_apps=(fastfetch fish hypr hyprland-preview-share-picker kitty quickshell xdg-desktop-portal)
-  local local_share_apps=(fuzi)
-
-  local backup_dir="$HOME/yozora-backup"
-  mkdir -p "$backup_dir/config"
-  mkdir -p "$backup_dir/local"
-
   echo
   log_info "[2/3] Copying selected configuration files and data..."
-
-  for app in "${config_apps[@]}"; do
-    local src_config="$script_dir/config/$app"
-    if [[ -d "$src_config" ]]; then
-      if [[ -d "$HOME/.config/$app" ]]; then
-        log_warn "Backing up old config/$app..."
-        rm -rf "$backup_dir/config/$app"
-        mv "$HOME/.config/$app" "$backup_dir/config/"
-      fi
-      cp -r "$src_config" "$HOME/.config/"
-      log_ok "Updated config for: $app"
-    else
-      log_err "Warning: folder config/$app not found at $src_config, skipping."
-    fi
-  done
-
-  for app in "${local_share_apps[@]}"; do
-    local src_local="$repo_root/share/$app"
-    if [[ -d "$src_local" ]]; then
-      if [[ -d "$HOME/.local/share/$app" ]]; then
-        log_warn "Backing up old local/share/$app..."
-        rm -rf "$backup_dir/local/$app"
-        mv "$HOME/.local/share/$app" "$backup_dir/local/"
-      fi
-      cp -r "$src_local" "$HOME/.local/share/"
-      log_ok "Updated local/share for: $app"
-    else
-      log_err "Warning: folder for $app not found in $src_local, skipping."
-    fi
-  done
-
-  mkdir -p "$HOME/.local/share/color-schemes"
-  if [[ -f "$script_dir/TokyoNight.colors" ]]; then
-    cp "$script_dir/TokyoNight.colors" "$HOME/.local/share/color-schemes/"
-    log_ok "Color theme copied successfully"
-  fi
+  install_yozora_dotfiles "$REPO_ROOT"
 
   echo
   log_info "[3/3] Installing packages..."
@@ -468,39 +393,4 @@ i_xone() {
   log_ok "Other packages installed successfully!"
 }
 
-# Menu
-s_menu() {
-  echo
-  log_info "======================================="
-  log_info "           CONFIGURATION MENU            "
-  log_info "======================================="
-  echo "1) Install Yozora"
-  echo "2) Install latest NVIDIA drivers"
-  echo "3) Install PipeWire"
-  echo "4) Install CUPS"
-  echo "5) Install Xone drivers"
-  echo "6) Exit"
-  log_info "=================V2.5=================="
-}
-
-main() {
-  while true; do
-    s_menu
-    read -r -p "Enter your choice [1-6]: " choice
-    case $choice in
-    1) i_yozora ;;
-    2) i_nvidia ;;
-    3) i_pipewire ;;
-    4) i_cups ;;
-    5) i_xone ;;
-    6)
-      echo
-      log_ok "Exiting. Bye!"
-      exit 0
-      ;;
-    *) log_warn "Invalid option. Please choose between 1 and 6." ;;
-    esac
-  done
-}
-
-main "$@"
+run_menu

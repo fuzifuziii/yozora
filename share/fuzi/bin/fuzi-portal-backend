@@ -1,12 +1,4 @@
 #!/usr/bin/python3
-"""org.freedesktop.impl.portal.FileChooser backend for fuzi-shell.
-
-Bridges xdg-desktop-portal to the quickshell FilePicker overlay via a pair
-of temp files and `quickshell ipc call`. Install with install-portal.sh,
-which copies the .portal / .service units into place; this script itself
-is expected to be launched on demand by D-Bus service activation, not run
-manually.
-"""
 
 import asyncio
 import logging
